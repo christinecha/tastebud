@@ -1,26 +1,29 @@
 var webpack = require('webpack')
 
 module.exports = {
-  entry: "./src/scripts",
+  entry: './src/scripts',
   output: {
-    publicPath: "/dist/scripts/",
-    path: __dirname + "/dist/scripts",
-    filename: "bundle.js"
+    filename: 'dist/bundle.js'
+  },
+  devServer: {
+    contentBase: __dirname + '/dist/',
+    publicPath: '/'
   },
   module: {
-    loaders: [
+    rules: [
       {
-        test: /\.js$/,
-        loader: "babel",
-        exclude: "/node_modules",
-        query: {
-          presets: ["es2015", "react"]
-        }
+        test: /\.js?$/,
+        loaders: [ 'babel-loader' ],
+        exclude: /node_modules/
       },
       {
-        test: /\.scss$/,
-        loaders: ["style", "css", "sass"],
-        exclude: "/node_modules"
+        test: /\.less$/,
+        loaders: [
+          'style-loader',
+          'css-loader',
+          'less-loader'
+        ],
+        exclude: /node_modules/
       }
     ]
   }
