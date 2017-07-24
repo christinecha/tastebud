@@ -1,10 +1,12 @@
 import { connect } from 'react-redux'
+import { withRouter } from 'react-router-dom'
 import { changeTheme } from '../actions'
 import App from './App'
 
 const mapStateToProps = (state) => {
   return {
-    theme: state.theme
+    theme: state.theme,
+    routing: state.routing
   }
 }
 
@@ -21,4 +23,4 @@ const AppContainer = connect(
   mapDispatchToProps
 )(App)
 
-export default AppContainer
+export default withRouter(AppContainer)
