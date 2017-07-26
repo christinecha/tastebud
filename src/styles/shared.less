@@ -1,9 +1,36 @@
-#app, #main {
-  width: 100vw;
-  height: 100vh;
+button, .button {
+  background-color: @gray-x-dark;
+  color: @white;
+
+  padding: 15px 25px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+
+  &.full-width {
+    width: 100%;
+  }
+
+  &.knockout {
+    color: @gray-x-dark;
+    background-color: @white;
+    border: 1px solid @gray-x-dark;
+  }
+
+  &.inactive {
+    opacity: 0.7;
+    pointer-events: none;
+  }
 }
 
-.dark {
-  background-color: black;
-  color: white;
+input {
+  padding: 15px 25px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+
+  color: @gray-x-dark;
+  border: 1px solid @gray-x-dark;
+
+  &.full-width {
+    width: 100%;
+  }
 }

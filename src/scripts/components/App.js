@@ -1,9 +1,12 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
-import { Route, Link } from 'react-router-dom'
+import { Route } from 'react-router-dom'
 
-import Home from './Home'
+import Header from './Header'
+import HomeView from './HomeView'
 import SampleComponent from './SampleComponent'
+import LoginView from './LoginView'
+import SignupView from './SignupView/index'
 
 
 class App extends React.Component {
@@ -15,7 +18,7 @@ class App extends React.Component {
     this.props.history.listen(location => this.handleHistoryListen(location))
   }
 
-  handleHistoryListen( location = {} ) {
+  handleHistoryListen(location = {}) {
     if (location.pathname !== this.props.location.pathname) {
       this.props.location.pathname = location.pathname || window.location.pathname
       this.forceUpdate()
@@ -29,16 +32,13 @@ class App extends React.Component {
 
   render() {
     return (
-      <div id='main' className={this.props.theme}>
-        <h1>hi</h1>
-        <nav>
-          <Link to='/'>Home</Link>
-          <Link to='/sample'>Dashboard</Link>
-        </nav>
-        <div>You are now at {this.props.location.pathname}</div>
+      <div className='content-wrapper'>
+        <Header />
         <div>
-          <Route exact path='/' component={Home} />
+          <Route exact path='/' component={HomeView} />
           <Route path='/sample' component={SampleComponent} />
+          <Route path='/login' component={LoginView} />
+          <Route path='/signup' component={SignupView} />
         </div>
       </div>
     )
