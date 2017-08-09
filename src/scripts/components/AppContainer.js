@@ -1,19 +1,19 @@
 import { connect } from 'react-redux'
 import { withRouter } from 'react-router-dom'
-import { changeTheme } from '../actions'
+import { updateCurrentUser } from '../actions'
 import App from './App'
 
 const mapStateToProps = (state) => {
   return {
-    theme: state.theme,
+    currentUser: state.currentUser,
     routing: state.routing
   }
 }
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    dispatchThemeChange: (theme) => {
-      dispatch(changeTheme(theme))
+    updateCurrentUser: (user) => {
+      dispatch(updateCurrentUser(user))
     }
   }
 }

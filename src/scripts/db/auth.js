@@ -1,8 +1,7 @@
 import { ref, firebaseAuth } from '../constants/firebase'
 
-export function auth (email, pw) {
-  return firebaseAuth().createUserWithEmailAndPassword(email, pw)
-    .then(saveUser)
+export const watchAuthState = (callback) => {
+  firebaseAuth().onAuthStateChanged(callback)
 }
 
 export function logout () {
@@ -19,4 +18,13 @@ export function resetPassword (email) {
 
 export const signUpWithEmail = ( email, pw ) => {
   return firebaseAuth().createUserWithEmailAndPassword(email, pw)
+}
+
+export const signInWithFacebook = () => {
+  const provider = new firebaseAuth.FacebookAuthProvider()
+  return firebaseAuth().signInWithRedirect(provider)
+}
+
+export const getUserFromFacebook = () => {
+  return firebaseAuth().getRedirectResult()
 }

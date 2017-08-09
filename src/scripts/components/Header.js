@@ -7,12 +7,15 @@ class Header extends React.Component {
   }
 
   render() {
+    const { currentUser } = this.props
+
     return (
       <nav id='header'>
         <Link to='/'>Home</Link>
         <Link to='/login'>Login</Link>
+        <Link to='/map'>Map</Link>
         <Link to='/signup'>Signup</Link>
-        <Link to='/sample'>Dashboard</Link>
+        {currentUser && <Link to={`/users/${currentUser.uid}`}>Profile</Link>}
       </nav>
     )
   }

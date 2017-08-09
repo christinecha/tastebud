@@ -60,17 +60,13 @@ class SignupView extends React.Component {
 
     signUpWithEmail(email, password)
     .then((response) => {
-      const _userData = {
+      saveUser({
         uid: response.uid,
         fullName,
         email,
         username,
         dateJoined: performance.now()
-      }
-
-      const userData = Object.assign({}, userSchema, _userData)
-
-      saveUser(userData)
+      })
     })
     .catch((error) => {
       console.log(error)

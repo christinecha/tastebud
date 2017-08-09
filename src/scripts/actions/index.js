@@ -1,6 +1,6 @@
-export const changeTheme = (theme) => {
+export const updateCurrentUser = (user) => {
   return {
-    type: 'CHANGE_THEME',
-    theme
+    type: 'UPDATE_CURRENT_USER',
+    currentUser: user
   }
 }

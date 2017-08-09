@@ -1,8 +1,8 @@
 import { combineReducers } from 'redux'
-import theme from './theme'
+import currentUser from './currentUser'
 
 const reducers = {
-  theme
+  currentUser
 }
 
 export default reducers
