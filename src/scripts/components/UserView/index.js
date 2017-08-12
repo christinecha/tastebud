@@ -1,5 +1,6 @@
 import React from 'react'
 import { saveUser } from '../../db/user'
+import { getLocation } from '../../db/location'
 import EditUser from './EditUser'
 
 class UserView extends React.Component {
@@ -7,6 +8,7 @@ class UserView extends React.Component {
     super(props)
 
     this.state = {
+      locations: [],
       isEditing: false
     }
   }
@@ -17,7 +19,32 @@ class UserView extends React.Component {
     if (currentUser) {
       currentUser.firstLogin = false
       saveUser(currentUser)
+
+      this.getUserRecommendations()
     }
+  }
+
+  getUserRecommendations() {
+    this.props.currentUser.recommendations.forEach(rec => {
+      getLocation(rec).then(snapshot => {
+        let _locations = this.state.locations
+        const location = snapshot.val()
+        _locations.push(location)
+        this.setState({ locations: _locations })
+      })
+    })
+  }
+
+  renderLocations() {
+    console.log(this.state.locations)
+    return this.state.locations.map((loc, i) => {
+      console.log(i, loc)
+      return (
+        <div className='recommendation' key={i}>
+          {loc.name}
+        </div>
+      )
+    })
   }
 
   renderUserInfo(user) {
@@ -30,6 +57,7 @@ class UserView extends React.Component {
         <button onClick={() => this.setState({ isEditing: true })}>edit</button>
         <h1>{user.fullName}</h1>
         <h5>@{user.username}</h5>
+        {this.renderLocations()}
       </div>
     )
   }

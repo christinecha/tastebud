@@ -1,9 +1,18 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { logout } from '../db/auth'
 
 class Header extends React.Component {
   constructor(props) {
     super(props)
+
+    this.handleClick = this.handleClick.bind(this)
+  }
+
+  handleClick() {
+    logout().then(() => {
+      this.props.history.push('/')
+    })
   }
 
   render() {
@@ -14,8 +23,10 @@ class Header extends React.Component {
         <Link to='/'>Home</Link>
         <Link to='/login'>Login</Link>
         <Link to='/map'>Map</Link>
+        <Link to='/save-location'>Save Location</Link>
         <Link to='/signup'>Signup</Link>
         {currentUser && <Link to={`/users/${currentUser.uid}`}>Profile</Link>}
+        {currentUser && <button onClick={this.handleClick}>Sign Out</button>}
       </nav>
     )
   }

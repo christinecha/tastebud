@@ -9,16 +9,21 @@ import HomeView from './HomeView'
 import SampleComponent from './SampleComponent'
 import MapView from './MapView'
 import LoginView from './LoginView'
+import SaveLocationView from './SaveLocationView'
 import SignupView from './SignupView/index'
 import UserView from './UserView/index'
 
-import { watchAuthState } from '../db/auth'
+import { getCurrentUser, watchAuthState } from '../db/auth'
 import { getUser, saveUser, createUserFromFacebookRedirect } from '../db/user'
 
 
 class App extends React.Component {
   constructor(props) {
     super(props)
+
+    this.state = {
+      isLoading: location.pathname === '/'
+    }
 
     this.handleLogin = this.handleLogin.bind(this)
     this.handleAuthStateChange = this.handleAuthStateChange.bind(this)
@@ -37,9 +42,17 @@ class App extends React.Component {
 
     if (user.firstLogin) this.props.history.push(`/users/${user.uid}`)
     else this.props.history.push('/map')
+
+    this.setState({ isLoading: false })
   }
 
   handleAuthStateChange(data) {
+    if (!data || !data.uid) {
+      this.props.updateCurrentUser(null)
+      this.setState({ isLoading: false })
+      return
+    }
+
     getUser(data.uid).then(snapshot => {
       const user = snapshot.val()
 
@@ -61,16 +74,25 @@ class App extends React.Component {
     this.props.dispatchThemeChange(newTheme)
   }
 
+  renderLoading() {
+    return (
+      <h1>loading</h1>
+    )
+  }
+
   render() {
+    if (this.state.isLoading) return this.renderLoading()
+
     return (
       <div className='content-wrapper'>
-        <Header currentUser={this.props.currentUser} />
+        <Header {...this.props} />
         <div>
           <Route exact path='/' component={HomeView} />
-          <Route path='/map' component={MapView} />
+          <PropsRoute path='/map' component={MapView} {...this.props} />
           <Route path='/sample' component={SampleComponent} />
           <Route path='/login' component={LoginView} />
           <Route path='/signup' component={SignupView} />
+          <PropsRoute path='/save-location' component={SaveLocationView} {...this.props} />
           <PropsRoute path='/users/:uid' component={UserView} {...this.props} />
         </div>
       </div>

@@ -4,15 +4,19 @@ export const watchAuthState = (callback) => {
   firebaseAuth().onAuthStateChanged(callback)
 }
 
-export function logout () {
+export const getCurrentUser = () => {
+  return firebaseAuth().currentUser
+}
+
+export const logout = () => {
   return firebaseAuth().signOut()
 }
 
-export function login (email, pw) {
+export const login = (email, pw) => {
   return firebaseAuth().signInWithEmailAndPassword(email, pw)
 }
 
-export function resetPassword (email) {
+export const resetPassword = (email) => {
   return firebaseAuth().sendPasswordResetEmail(email)
 }
 
