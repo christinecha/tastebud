@@ -24,11 +24,13 @@ class MapView extends React.Component {
     const { currentUser } = this.props
 
     if (!currentUser) return
+    if (!currentUser.following) return
 
     currentUser.following.forEach(userId => {
       console.log(userId)
       getUser(userId).then(userSnapshot => {
         const user = userSnapshot.val()
+        if (!user.recommendations) return
 
         user.recommendations.forEach(rec => {
           getLocation(rec).then(snapshot => {

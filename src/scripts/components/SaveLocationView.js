@@ -24,10 +24,10 @@ class SaveLocationView extends React.Component {
       location: { lat: 40.725493, lng: -74.004167 },
       type: [ 'restaurant' ]
     }
-
+console.log('getting')
     const service = new google.maps.places.PlacesService(this.$locations)
     service.textSearch(request, (places, status) => {
-      console.log(places)
+      console.log(places, 'pl')
       if (status !== google.maps.places.PlacesServiceStatus.OK) return
 
       const place = places[0]
@@ -42,11 +42,12 @@ class SaveLocationView extends React.Component {
       }
 
       newLocation(placeData).then((placeId) => {
-        let newRecommendations = this.props.currentUser.recommendations
+        let newRecommendations = this.props.currentUser.recommendations || []
         newRecommendations.push(placeId)
-        updateUser(this.props.currentUser.uid, { recommendations: newRecommendations })
-
-        this.props.history.push(`/users/${this.props.currentUser.uid}`)
+        console.log('new', newRecommendations)
+        updateUser(this.props.currentUser.uid, { recommendations: newRecommendations }).then(() => {
+          this.props.history.push(`/users/${this.props.currentUser.uid}`)
+        })
       })
     })
   }

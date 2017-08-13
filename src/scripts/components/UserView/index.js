@@ -16,20 +16,31 @@ class UserView extends React.Component {
   componentDidMount() {
     const { currentUser } = this.props
 
-    if (currentUser) {
+    if (!currentUser) return
+
+    if (currentUser.firstLogin) {
       currentUser.firstLogin = false
       saveUser(currentUser)
-
-      this.getUserRecommendations()
     }
+
+    this.getUserRecommendations()
+  }
+
+  componentWillUnmount() {
+    this.isUnmounting = true
   }
 
   getUserRecommendations() {
+    if (!this.props.currentUser.recommendations) return
+
     this.props.currentUser.recommendations.forEach(rec => {
       getLocation(rec).then(snapshot => {
         let _locations = this.state.locations
         const location = snapshot.val()
         _locations.push(location)
+
+        if (this.isUnmounting) return
+
         this.setState({ locations: _locations })
       })
     })
