@@ -7,7 +7,7 @@ import { Router, browserHistory, Route, withRouter } from 'react-router-dom'
 import { syncHistoryWithStore, routerReducer } from 'react-router-redux'
 import { combineReducers, createStore } from 'redux'
 import { createBrowserHistory } from 'history'
-import { updateLocation } from './actions'
+import { updatePlace } from './actions'
 
 import reducers from './reducers'
 import AppContainer from './components/AppContainer'

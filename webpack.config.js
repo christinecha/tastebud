@@ -9,7 +9,7 @@ module.exports = {
   devServer: {
     historyApiFallback: true,
     contentBase: __dirname + '/',
-    publicPath: '/'
+    publicPath: __dirname + '/'
   },
   module: {
     rules: [

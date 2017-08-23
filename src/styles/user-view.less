@@ -1,0 +1,52 @@
+#user-view {
+  .edit-profile {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+  }
+
+  .follow-profile {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+  }
+
+  .profile-picture {
+    width: 100px;
+    height: 100px;
+    border-radius: 100%;
+
+    background-size: cover;
+    background-position: center;
+    background-image: url('../../assets/images/default-profile-picture.png');
+
+    margin: auto;
+  }
+
+  .stats {
+    display: flex;
+    justify-content: space-between;
+
+    padding-top: 20px;
+    padding-bottom: 20px;
+
+    .stats-places,
+    .stats-followers,
+    .stats-following {
+      flex: 1;
+    }
+  }
+
+  .places {
+    padding-top: 10px;
+  }
+
+  .place {
+    padding-top: 20px;
+    padding-bottom: 20px;
+
+    border-bottom: 1px solid @light-gray;
+
+    text-align: left;
+  }
+}

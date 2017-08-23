@@ -1,83 +1,176 @@
 import React from 'react'
-import { saveUser } from '../../db/user'
-import { getLocation } from '../../db/location'
+import { followUser, getUser, saveUser } from '../../db/user'
+import { getPlace } from '../../db/place'
 import EditUser from './EditUser'
+import { getFollowerInfo } from './lib/getFollowerInfo'
 
 class UserView extends React.Component {
   constructor(props) {
     super(props)
 
     this.state = {
-      locations: [],
+      user: null,
+      places: [],
       isEditing: false
     }
   }
 
   componentDidMount() {
-    const { currentUser } = this.props
+    const { pathname } = this.props.location
+    const pathParts = pathname.split('/')
+    const userId = pathParts[pathParts.length - 1]
 
-    if (!currentUser) return
+    getUser(userId).then(snapshot => {
+      if (this.isUnmounting) return
 
-    if (currentUser.firstLogin) {
-      currentUser.firstLogin = false
-      saveUser(currentUser)
-    }
+      const user = snapshot.val()
+      this.setState({ user })
 
-    this.getUserRecommendations()
+      const { currentUser } = this.props
+
+      if (currentUser && user.uid === currentUser.uid) {
+        if (currentUser.firstLogin) {
+          currentUser.firstLogin = false
+          saveUser(currentUser)
+        }
+      }
+
+      this.getUserPlaces()
+    })
   }
 
   componentWillUnmount() {
     this.isUnmounting = true
   }
 
-  getUserRecommendations() {
-    if (!this.props.currentUser.recommendations) return
+  updateStateArray(key, newItem, i) {
+    let items = this.state[key].slice()
 
-    this.props.currentUser.recommendations.forEach(rec => {
-      getLocation(rec).then(snapshot => {
-        let _locations = this.state.locations
-        const location = snapshot.val()
-        _locations.push(location)
+    if (i !== undefined) items[i] = newItem
+    else items.push(newItem)
 
+    const stateObj = {}
+    stateObj[key] = items
+
+    this.setState(stateObj)
+  }
+
+  getUserPlaces() {
+    const { user } = this.state
+
+    if (!user || !user.places) return
+
+    user.places.forEach((placeId, i) => {
+      getPlace(placeId).then(snapshot => {
         if (this.isUnmounting) return
 
-        this.setState({ locations: _locations })
+        const place = snapshot.val()
+
+        this.updateStateArray('places', place)
+
+        getFollowerInfo(place, user).then((msg) => {
+          place.followerInfoMsg = msg
+          this.updateStateArray('places', place, i)
+        })
       })
     })
   }
 
-  renderLocations() {
-    console.log(this.state.locations)
-    return this.state.locations.map((loc, i) => {
-      console.log(i, loc)
+  followUser() {
+    const { currentUser } = this.props
+    const { user } = this.state
+
+    followUser(currentUser, user.uid)
+  }
+
+  renderPlaces() {
+    return this.state.places.map((place, i) => {
       return (
-        <div className='recommendation' key={i}>
-          {loc.name}
+        <div className='place' key={i}>
+          <div className='icon'></div>
+          <h3 className='name'>{place.name}</h3>
+          <p className='locale label'>West Village</p>
+          <div className='follower-info'>
+            <p>{place.followerInfoMsg}</p>
+          </div>
         </div>
       )
     })
   }
 
-  renderUserInfo(user) {
+  renderStats() {
+    const { user } = this.state
+    if (!user) return null
+
+    const places = user.places || []
+    const following = user.following || []
+    const followers = user.followers || []
+
+    return (
+      <div className='stats'>
+        <div className='stats-places'>
+          <p className='label'>Places</p>
+          <h4 className='number'>{places.length}</h4>
+        </div>
+        <div className='stats-followers'>
+          <p className='label'>Followers</p>
+          <h4 className='number'>{followers.length}</h4>
+        </div>
+        <div className='stats-following'>
+          <p className='label'>Following</p>
+          <h4 className='number'>{following.length}</h4>
+        </div>
+      </div>
+    )
+  }
+
+  renderUserInfo() {
+    const { currentUser } = this.props
+    const { user } = this.state
     if (!user) return null
 
     if (this.state.isEditing) return <EditUser {...this.props} />
 
+    const isSelf = (
+      currentUser &&
+      currentUser.uid === user.uid
+    )
+
     return (
       <div>
-        <button onClick={() => this.setState({ isEditing: true })}>edit</button>
+        {isSelf &&
+          <button
+            className='edit-profile'
+            onClick={() => this.setState({ isEditing: true })}
+          >
+            edit
+          </button>
+        }
+        {!isSelf &&
+          <button
+            className='follow-profile'
+            onClick={() => this.followUser()}
+          >
+            follow
+          </button>
+        }
+        <div className='profile-picture'></div>
         <h1>{user.fullName}</h1>
         <h5>@{user.username}</h5>
-        {this.renderLocations()}
+        <h6 className='location'>New York, NY</h6>
       </div>
     )
   }
 
   render() {
-    const { currentUser } = this.props
     return (
-      <main id='user-view'>
-        {this.renderUserInfo(currentUser)}
+      <main id='user-view' className='view'>
+        {this.renderUserInfo()}
+        {this.renderStats()}
+
+        <div className='places'>
+          {this.renderPlaces()}
+        </div>
       </main>
     )
   }

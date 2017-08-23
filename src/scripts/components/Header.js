@@ -24,7 +24,7 @@ class Header extends React.Component {
         <Link to='/login'>Login</Link>
         <Link to='/map'>Map</Link>
         {!currentUser && <Link to='/signup'>Signup</Link>}
-        {currentUser && <Link to='/save-location'>Save Location</Link>}
+        {currentUser && <Link to='/save-place'>Save Place</Link>}
         {currentUser && <Link to={`/users/${currentUser.uid}`}>Profile</Link>}
         {currentUser && <button onClick={this.handleClick}>Sign Out</button>}
       </nav>

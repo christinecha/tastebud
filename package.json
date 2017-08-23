@@ -1,7 +1,7 @@
 {
   "name": "tastebud",
   "version": "0.0.0",
-  "description": "A web app that helps you find recommendations you trust.",
+  "description": "A web app that helps you find places you trust.",
   "main": "app.js",
   "repository": "https://github.com/christinecha/tastebud",
   "scripts": {

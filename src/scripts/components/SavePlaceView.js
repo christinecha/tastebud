@@ -2,10 +2,10 @@ import React from 'react'
 import GoogleMaps from 'google-maps'
 
 import locationSchema from '../schema/locationSchema'
-import { newLocation } from '../db/location'
+import { addUserToPlace, newPlace } from '../db/place'
 import { updateUser } from '../db/user'
 
-class SaveLocationView extends React.Component {
+class SavePlaceView extends React.Component {
   constructor(props) {
     super(props)
 
@@ -15,19 +15,15 @@ class SaveLocationView extends React.Component {
     this.state.searchQuery = ''
   }
 
-  componentDidMount() {
-  }
-
   getSearchResults() {
     const request = {
       query: this.state.searchQuery,
       location: { lat: 40.725493, lng: -74.004167 },
       type: [ 'restaurant' ]
     }
-console.log('getting')
-    const service = new google.maps.places.PlacesService(this.$locations)
+
+    const service = new google.maps.places.PlacesService(this.$places)
     service.textSearch(request, (places, status) => {
-      console.log(places, 'pl')
       if (status !== google.maps.places.PlacesServiceStatus.OK) return
 
       const place = places[0]
@@ -41,11 +37,11 @@ console.log('getting')
         vicinity: place.vicinity || ''
       }
 
-      newLocation(placeData).then((placeId) => {
-        let newRecommendations = this.props.currentUser.recommendations || []
-        newRecommendations.push(placeId)
-        console.log('new', newRecommendations)
-        updateUser(this.props.currentUser.uid, { recommendations: newRecommendations }).then(() => {
+      newPlace(placeData).then((placeId) => {
+        addUserToPlace(placeId, this.props.currentUser.uid)
+        let newPlaces = this.props.currentUser.places || []
+        newPlaces.push(placeId)
+        updateUser(this.props.currentUser.uid, { places: newPlaces }).then(() => {
           this.props.history.push(`/users/${this.props.currentUser.uid}`)
         })
       })
@@ -66,7 +62,7 @@ console.log('getting')
     const { searchQuery } = this.state
     return (
       <div>
-        <div className='locations' ref={$l => this.$locations = $l}></div>
+        <div className='places' ref={$l => this.$places = $l}></div>
         <input name='searchQuery' type='text' value={searchQuery} onChange={this.handleInputChange}/>
         <button onClick={() => this.handleSubmit()}>Submit Changes</button>
       </div>
@@ -74,4 +70,4 @@ console.log('getting')
   }
 }
 
-export default SaveLocationView
+export default SavePlaceView

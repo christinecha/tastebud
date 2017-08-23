@@ -2,7 +2,7 @@ import React from 'react'
 import axios from 'axios'
 import GoogleMaps from 'google-maps'
 
-import { getLocation } from '../db/location'
+import { getPlace } from '../db/place'
 import { getUser } from '../db/user'
 
 
@@ -11,42 +11,47 @@ class MapView extends React.Component {
     super(props)
 
     this.state = {
-      locations: []
+      places: []
     }
   }
 
   componentDidMount() {
     this.generateMap()
-    this.getLocations()
+    this.getPlaces()
   }
 
-  getLocations() {
+  componentWillUnmount() {
+    this.isUnmounting = true
+  }
+
+  getPlaces() {
     const { currentUser } = this.props
 
     if (!currentUser) return
     if (!currentUser.following) return
 
     currentUser.following.forEach(userId => {
-      console.log(userId)
       getUser(userId).then(userSnapshot => {
         const user = userSnapshot.val()
-        if (!user.recommendations) return
+        if (!user.places) return
 
-        user.recommendations.forEach(rec => {
-          getLocation(rec).then(snapshot => {
-            let locations = this.state.locations
+        user.places.forEach(rec => {
+          getPlace(rec).then(snapshot => {
+            let places = this.state.places
             const location = snapshot.val()
-            locations.push(location)
-            this.renderLocationMarker(location)
-            this.setState({ locations: locations })
+            places.push(location)
+            this.renderPlaceMarker(location)
+
+            if (this.isUnmounting) return
+
+            this.setState({ places: places })
           })
         })
       })
     })
   }
 
-  renderLocationMarker(location) {
-    console.log(location)
+  renderPlaceMarker(location) {
     if (!this.map) return
 
     const marker = new google.maps.Marker({

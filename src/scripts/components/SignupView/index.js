@@ -78,7 +78,6 @@ class SignupView extends React.Component {
     const step = constants.STEPS[this.state.step]
 
     this.getValidated(e.target.value)
-    console.log(step, e.target.value)
   }
 
   renderInput() {

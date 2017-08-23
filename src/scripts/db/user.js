@@ -28,3 +28,24 @@ export const createUserFromFacebookRedirect = (callback) => {
     .then(callback)
   })
 }
+
+export const followUser = (user, followId) => {
+  const following = user.following ? user.following.slice() : []
+  if (following.indexOf(followId) > -1) return
+
+  following.push(followId)
+  updateUser(user.uid, { following })
+
+  getUser(followId).then((snapshot) => {
+    const followedUser = snapshot.val()
+    updateUserFollowing(followedUser, user.uid)
+  })
+}
+
+export const updateUserFollowing = (user, followerId) => {
+  const followers = user.followers ? user.followers.slice() : []
+  if (followers.indexOf(followerId) > -1) return
+
+  followers.push(followerId)
+  updateUser(user.uid, { followers })
+}

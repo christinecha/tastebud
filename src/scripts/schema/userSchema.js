@@ -6,7 +6,7 @@ const userSchema = {
   'email': '',
   'dateJoined': performance.now(),
   'lists': [],
-  'recommendations': []
+  'places': []
 }
 
 export default userSchema

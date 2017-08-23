@@ -16,6 +16,9 @@ class LoginView extends React.Component {
     e.preventDefault()
 
     login(this.email.value, this.pw.value)
+    .then(() => {
+      this.props.history.push('/map')
+    })
     .catch((error) => {
       this.setState(setErrorMsg('Invalid username/password.'))
     })

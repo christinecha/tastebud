@@ -9,7 +9,7 @@ import HomeView from './HomeView'
 import SampleComponent from './SampleComponent'
 import MapView from './MapView'
 import LoginView from './LoginView'
-import SaveLocationView from './SaveLocationView'
+import SavePlaceView from './SavePlaceView'
 import SignupView from './SignupView/index'
 import UserView from './UserView/index'
 
@@ -90,9 +90,9 @@ class App extends React.Component {
           <Route exact path='/' component={HomeView} />
           <PropsRoute path='/map' component={MapView} {...this.props} />
           <Route path='/sample' component={SampleComponent} />
-          <Route path='/login' component={LoginView} />
+          <PropsRoute path='/login' component={LoginView} {...this.props} />
           <Route path='/signup' component={SignupView} />
-          <PropsRoute path='/save-location' component={SaveLocationView} {...this.props} />
+          <PropsRoute path='/save-place' component={SavePlaceView} {...this.props} />
           <PropsRoute path='/users/:uid' component={UserView} {...this.props} />
         </div>
       </div>
