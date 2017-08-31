@@ -3,7 +3,7 @@ const webpack = require('webpack')
 module.exports = {
   entry: './src/scripts',
   output: {
-    filename: 'dist/bundle.js'
+    filename: 'public/dist/bundle.js'
   },
   devServer: {
     historyApiFallback: true,
