@@ -7,8 +7,8 @@ module.exports = {
   },
   devServer: {
     historyApiFallback: true,
-    contentBase: __dirname + '/',
-    publicPath: __dirname + '/'
+    contentBase: __dirname + '/public/',
+    publicPath: __dirname + '/public/'
   },
   module: {
     rules: [
