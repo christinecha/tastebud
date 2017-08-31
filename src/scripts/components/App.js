@@ -4,12 +4,13 @@ import { Route } from 'react-router-dom'
 
 import PropsRoute from './PropsRoute'
 
-import Header from './Header'
+import Header from './Header/index'
 import HomeView from './HomeView'
 import SampleComponent from './SampleComponent'
 import MapView from './MapView'
 import LoginView from './LoginView'
 import SavePlaceView from './SavePlaceView'
+import SearchView from './SearchView'
 import SignupView from './SignupView/index'
 import UserView from './UserView/index'
 
@@ -93,6 +94,7 @@ class App extends React.Component {
           <PropsRoute path='/login' component={LoginView} {...this.props} />
           <Route path='/signup' component={SignupView} />
           <PropsRoute path='/save-place' component={SavePlaceView} {...this.props} />
+          <PropsRoute path='/search' component={SearchView} {...this.props} />
           <PropsRoute path='/users/:uid' component={UserView} {...this.props} />
         </div>
       </div>

@@ -1,0 +1,41 @@
+#search-view {
+  .search-input {
+    width: 100%;
+  }
+
+  .instructions {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .search-results {
+    max-height: 100%;
+    overflow: scroll;
+  }
+
+  .result {
+    display: flex;
+    align-items: center;
+
+    text-align: left;
+    border-bottom: 1px solid @light-gray;
+    padding-top: 20px;
+    padding-bottom: 20px;
+
+    h3 {
+      vertical-align: middle;
+      font-size: 90%;
+    }
+
+    button {
+      vertical-align: middle;
+      margin: 0;
+      margin-right: 0;
+      margin-left: auto;
+      padding: 10px 15px;
+      width: 65px;
+    }
+  }
+}

@@ -1,5 +1,4 @@
 const webpack = require('webpack')
-const config = require('./config')
 
 module.exports = {
   entry: './src/scripts',
@@ -37,8 +36,5 @@ module.exports = {
         ]
       }
     ]
-  },
-  plugins: [
-    new webpack.DefinePlugin(config)
-  ]
+  }
 }

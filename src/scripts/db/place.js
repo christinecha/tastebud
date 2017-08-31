@@ -26,10 +26,8 @@ export const newPlace = (_locationData) => {
     isDupePlace(locationData).then(dupeId => {
       if (dupeId) return resolve(dupeId)
 
-      const newPlaceRef = ref.child('places').push(locationData)
-      newPlaceRef.update({ id: newPlaceRef.key }).then(() => {
-        resolve(newPlaceRef.key)
-      })
+      ref.child(`places/${locationData.id}`).set(locationData)
+      .then(() => resolve(locationData.id))
     })
   })
 }

@@ -35,10 +35,12 @@ class MapView extends React.Component {
         const user = userSnapshot.val()
         if (!user.places) return
 
-        user.places.forEach(rec => {
-          getPlace(rec).then(snapshot => {
+        user.places.forEach(place => {
+          getPlace(place).then(snapshot => {
             let places = this.state.places
             const location = snapshot.val()
+            if (!location) return
+
             places.push(location)
             this.renderPlaceMarker(location)
 

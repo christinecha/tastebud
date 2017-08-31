@@ -27,7 +27,6 @@ class UserView extends React.Component {
       this.setState({ user })
 
       const { currentUser } = this.props
-
       if (currentUser && user.uid === currentUser.uid) {
         if (currentUser.firstLogin) {
           currentUser.firstLogin = false
@@ -66,7 +65,7 @@ class UserView extends React.Component {
 
         const place = snapshot.val()
 
-        this.updateStateArray('places', place)
+        if (!place) return
 
         getFollowerInfo(place, user).then((msg) => {
           place.followerInfoMsg = msg
@@ -84,9 +83,11 @@ class UserView extends React.Component {
   }
 
   renderPlaces() {
-    return this.state.places.map((place, i) => {
+    return this.state.places.map((place) => {
+      if (!place) return null
+
       return (
-        <div className='place' key={i}>
+        <div className='place' key={place.id}>
           <div className='icon'></div>
           <h3 className='name'>{place.name}</h3>
           <p className='locale label'>West Village</p>
@@ -100,6 +101,7 @@ class UserView extends React.Component {
 
   renderStats() {
     const { user } = this.state
+    console.log('wha', user)
     if (!user) return null
 
     const places = user.places || []
