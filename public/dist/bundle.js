@@ -3712,9 +3712,11 @@ var createUserFromFacebookRedirect = exports.createUserFromFacebookRedirect = fu
 
     if (!fbUser) return;
 
+    var userRef = _firebase.ref.child('users').push();
+
     saveUser({
       fullName: fbUser.displayName,
-      uid: data.uid
+      uid: userRef.key
     }).then(callback);
   });
 };

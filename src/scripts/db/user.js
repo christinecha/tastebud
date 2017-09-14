@@ -21,9 +21,11 @@ export const createUserFromFacebookRedirect = (callback) => {
 
     if (!fbUser) return
 
+    const userRef = ref.child('users').push()
+
     saveUser({
       fullName: fbUser.displayName,
-      uid: data.uid
+      uid: userRef.key
     })
     .then(callback)
   })
