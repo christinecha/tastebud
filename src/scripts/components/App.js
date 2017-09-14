@@ -36,7 +36,7 @@ class App extends React.Component {
     setTimeout(() => {
       if (this.isUnmounting) return
       this.setState({ isLoading: false })
-    }, 5000)
+    }, 3000)
 
     watchAuthState(this.handleAuthStateChange)
   }
@@ -68,7 +68,12 @@ class App extends React.Component {
 
       if (user) return this.handleLogin(user)
 
-      createUserFromFacebookRedirect(this.handleLogin)
+      createUserFromFacebookRedirect((uid) => {
+        getUser(uid).then(_snapshot => {
+          const _user = _snapshot.val()
+          if (_user) this.handleLogin(_user)
+        })
+      })
     })
   }
 

@@ -27,7 +27,7 @@ export const createUserFromFacebookRedirect = (callback) => {
       fullName: fbUser.displayName,
       uid: userRef.key
     })
-    .then(callback)
+    .then(() => callback(userRef.key))
   })
 }
 

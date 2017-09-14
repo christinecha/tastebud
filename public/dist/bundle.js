@@ -3717,7 +3717,9 @@ var createUserFromFacebookRedirect = exports.createUserFromFacebookRedirect = fu
     saveUser({
       fullName: fbUser.displayName,
       uid: userRef.key
-    }).then(callback);
+    }).then(function () {
+      return callback(userRef.key);
+    });
   });
 };
 
@@ -29098,7 +29100,7 @@ var _index6 = _interopRequireDefault(_index5);
 
 var _auth = __webpack_require__(39);
 
-var _user = __webpack_require__(23);
+var _user2 = __webpack_require__(23);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -29137,7 +29139,7 @@ var App = function (_React$Component) {
       setTimeout(function () {
         if (_this2.isUnmounting) return;
         _this2.setState({ isLoading: false });
-      }, 5000);
+      }, 3000);
 
       (0, _auth.watchAuthState)(this.handleAuthStateChange);
     }
@@ -29168,12 +29170,17 @@ var App = function (_React$Component) {
         return;
       }
 
-      (0, _user.getUser)(data.uid).then(function (snapshot) {
+      (0, _user2.getUser)(data.uid).then(function (snapshot) {
         var user = snapshot.val();
 
         if (user) return _this3.handleLogin(user);
 
-        (0, _user.createUserFromFacebookRedirect)(_this3.handleLogin);
+        (0, _user2.createUserFromFacebookRedirect)(function (uid) {
+          (0, _user2.getUser)(uid).then(function (_snapshot) {
+            var _user = _snapshot.val();
+            if (_user) _this3.handleLogin(_user);
+          });
+        });
       });
     }
   }, {
