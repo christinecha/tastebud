@@ -24,7 +24,11 @@ class HomeView extends React.Component {
       <main id='home-view' className='view'>
         <h1>Tastemark</h1>
 
-        <button className='button facebook full-width' onClick={this.signInWithFacebook}>Sign In With Facebook</button>
+        <button className='button facebook full-width' onClick={this.signInWithFacebook}>
+          Continue With Facebook
+        </button>
+
+        <hr />
 
         <Link to='/signup'>
           <button className='button full-width knockout'>Sign Up With Email</button>
