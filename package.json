@@ -2,10 +2,11 @@
   "name": "tastebud",
   "version": "0.0.0",
   "description": "A web app that helps you find places you trust.",
-  "main": "app.js",
+  "main": "server/app.js",
   "repository": "https://github.com/christinecha/tastebud",
   "scripts": {
-    "start": "webpack-dev-server --hot --progress",
+    "dev": "webpack --watch",
+    "start": "node ./server/app.js",
     "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -1,6 +1,6 @@
 import React from 'react'
 import { withRouter } from 'react-router-dom'
-import { Route } from 'react-router-dom'
+import { Route, Switch, Redirect } from 'react-router-dom'
 
 import PropsRoute from './PropsRoute'
 
@@ -88,14 +88,17 @@ class App extends React.Component {
       <div className='content-wrapper'>
         <Header {...this.props} />
         <div>
-          <Route exact path='/' component={HomeView} />
-          <PropsRoute path='/map' component={MapView} {...this.props} />
-          <Route path='/sample' component={SampleComponent} />
-          <PropsRoute path='/login' component={LoginView} {...this.props} />
-          <Route path='/signup' component={SignupView} />
-          <PropsRoute path='/save-place' component={SavePlaceView} {...this.props} />
-          <PropsRoute path='/search' component={SearchView} {...this.props} />
-          <PropsRoute path='/users/:uid' component={UserView} {...this.props} />
+          <Switch>
+            <Route exact path='/' component={HomeView} />
+            <PropsRoute path='/map' component={MapView} {...this.props} />
+            <Route path='/sample' component={SampleComponent} />
+            <PropsRoute path='/login' component={LoginView} {...this.props} />
+            <Route path='/signup' component={SignupView} />
+            <PropsRoute path='/save-place' component={SavePlaceView} {...this.props} />
+            <PropsRoute path='/search' component={SearchView} {...this.props} />
+            <PropsRoute path='/users/:uid' component={UserView} {...this.props} />
+            <Redirect from='*' to='/' />
+          </Switch>
         </div>
       </div>
     )

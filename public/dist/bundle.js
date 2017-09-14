@@ -29201,14 +29201,19 @@ var App = function (_React$Component) {
         _react2.default.createElement(
           'div',
           null,
-          _react2.default.createElement(_reactRouterDom.Route, { exact: true, path: '/', component: _HomeView2.default }),
-          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/map', component: _MapView2.default }, this.props)),
-          _react2.default.createElement(_reactRouterDom.Route, { path: '/sample', component: _SampleComponent2.default }),
-          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/login', component: _LoginView2.default }, this.props)),
-          _react2.default.createElement(_reactRouterDom.Route, { path: '/signup', component: _index4.default }),
-          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/save-place', component: _SavePlaceView2.default }, this.props)),
-          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/search', component: _SearchView2.default }, this.props)),
-          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid', component: _index6.default }, this.props))
+          _react2.default.createElement(
+            _reactRouterDom.Switch,
+            null,
+            _react2.default.createElement(_reactRouterDom.Route, { exact: true, path: '/', component: _HomeView2.default }),
+            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/map', component: _MapView2.default }, this.props)),
+            _react2.default.createElement(_reactRouterDom.Route, { path: '/sample', component: _SampleComponent2.default }),
+            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/login', component: _LoginView2.default }, this.props)),
+            _react2.default.createElement(_reactRouterDom.Route, { path: '/signup', component: _index4.default }),
+            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/save-place', component: _SavePlaceView2.default }, this.props)),
+            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/search', component: _SearchView2.default }, this.props)),
+            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid', component: _index6.default }, this.props)),
+            _react2.default.createElement(_reactRouterDom.Redirect, { from: '*', to: '/' })
+          )
         )
       );
     }
