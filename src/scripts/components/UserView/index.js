@@ -101,7 +101,7 @@ class UserView extends React.Component {
 
   renderStats() {
     const { user } = this.state
-    console.log('wha', user)
+
     if (!user) return null
 
     const places = user.places || []

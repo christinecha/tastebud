@@ -29489,6 +29489,8 @@ var _react2 = _interopRequireDefault(_react);
 
 var _auth = __webpack_require__(39);
 
+var _user = __webpack_require__(23);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -29520,10 +29522,14 @@ var LoginView = function (_React$Component) {
 
       e.preventDefault();
 
-      (0, _auth.login)(this.email.value, this.pw.value).then(function () {
-        _this2.props.history.push('/map');
+      (0, _auth.login)(this.email.value, this.pw.value).then(function (data) {
+        (0, _user.getUser)(data.uid).then(function (snapshot) {
+          var user = snapshot.val();
+          _this2.props.updateCurrentUser(user);
+          _this2.props.history.push('/map');
+        });
       }).catch(function (error) {
-        _this2.setState(setErrorMsg('Invalid username/password.'));
+        return _this2.setErrorMsg('Invalid username/password.');
       });
     }
   }, {
@@ -29532,9 +29538,17 @@ var LoginView = function (_React$Component) {
       var _this3 = this;
 
       (0, _auth.resetPassword)(this.email.value).then(function () {
-        return _this3.setState(setErrorMsg('Password reset email sent to ' + _this3.email.value + '.'));
+        return _this3.setErrorMsg('Password reset email sent to ' + _this3.email.value + '.');
       }).catch(function (error) {
-        return _this3.setState(setErrorMsg('Email address not found.'));
+        return _this3.setErrorMsg('Email address not found.');
+      });
+    }
+  }, {
+    key: 'setErrorMsg',
+    value: function setErrorMsg(msg) {
+      console.log(msg);
+      this.setState({
+        errorMsg: msg
       });
     }
   }, {
@@ -29599,6 +29613,11 @@ var LoginView = function (_React$Component) {
             'button',
             { type: 'submit', className: 'btn btn-primary' },
             'Login'
+          ),
+          this.state.errorMsg && _react2.default.createElement(
+            'div',
+            { className: 'error' },
+            this.state.errorMsg
           )
         )
       );
@@ -30811,7 +30830,7 @@ var UserView = function (_React$Component) {
     value: function renderStats() {
       var user = this.state.user;
 
-      console.log('wha', user);
+
       if (!user) return null;
 
       var places = user.places || [];

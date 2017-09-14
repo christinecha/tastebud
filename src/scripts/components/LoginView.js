@@ -1,5 +1,6 @@
 import React from 'react'
 import { login, resetPassword } from '../db/auth'
+import { getUser } from '../db/user'
 
 class LoginView extends React.Component {
   constructor(props) {
@@ -16,18 +17,27 @@ class LoginView extends React.Component {
     e.preventDefault()
 
     login(this.email.value, this.pw.value)
-    .then(() => {
-      this.props.history.push('/map')
+    .then((data) => {
+      getUser(data.uid).then(snapshot => {
+        const user = snapshot.val()
+        this.props.updateCurrentUser(user)
+        this.props.history.push('/map')
+      })
     })
-    .catch((error) => {
-      this.setState(setErrorMsg('Invalid username/password.'))
-    })
+    .catch((error) => this.setErrorMsg('Invalid username/password.'))
   }
 
   resetPassword() {
     resetPassword(this.email.value)
-    .then(() => this.setState(setErrorMsg(`Password reset email sent to ${this.email.value}.`)))
-    .catch((error) => this.setState(setErrorMsg(`Email address not found.`)))
+    .then(() => this.setErrorMsg(`Password reset email sent to ${this.email.value}.`))
+    .catch((error) => this.setErrorMsg(`Email address not found.`))
+  }
+
+  setErrorMsg(msg) {
+    console.log(msg)
+    this.setState({
+      errorMsg: msg
+    })
   }
 
   render() {
@@ -52,6 +62,12 @@ class LoginView extends React.Component {
              </div>
             }
           <button type='submit' className='btn btn-primary'>Login</button>
+          {
+           this.state.errorMsg &&
+           <div className='error'>
+             {this.state.errorMsg}
+           </div>
+          }
         </form>
       </main>
     )
