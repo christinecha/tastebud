@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { followUser, getUser, saveUser, watchUser } from '../../db/user'
 import { getPlace } from '../../db/place'
 import EditUser from './EditUser'
@@ -16,9 +17,7 @@ class UserView extends React.Component {
   }
 
   componentDidMount() {
-    const { pathname } = this.props.location
-    const pathParts = pathname.split('/')
-    const userId = pathParts[pathParts.length - 1]
+    const userId = this.props.computedMatch.params.uid
 
     watchUser(userId, snapshot => {
       if (this.isUnmounting) return
@@ -115,12 +114,16 @@ class UserView extends React.Component {
           <h4 className='number'>{places.length}</h4>
         </div>
         <div className='stats-followers'>
-          <p className='label'>Followers</p>
-          <h4 className='number'>{followers.length}</h4>
+          <Link to={`/users/${user.uid}/followers`}>
+            <p className='label'>Followers</p>
+            <h4 className='number'>{followers.length}</h4>
+          </Link>
         </div>
         <div className='stats-following'>
-          <p className='label'>Following</p>
-          <h4 className='number'>{following.length}</h4>
+          <Link to={`/users/${user.uid}/following`}>
+            <p className='label'>Following</p>
+            <h4 className='number'>{following.length}</h4>
+          </Link>
         </div>
       </div>
     )

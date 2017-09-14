@@ -1,4 +1,6 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
+import { getUser } from '../db/user'
 
 class UserList extends React.Component {
   constructor(props) {
@@ -9,30 +11,50 @@ class UserList extends React.Component {
     }
   }
 
-  componentWillMount() {
-    this.getUsers.then(userSnapshots => {
+  componentWillReceiveProps(props) {
+    this.getUsers(props.users).then(userSnapshots => {
+      if (this.isUnmounting) return
       this.setState({
         users: userSnapshots.map(s => s.val())
       })
     })
   }
 
-  getUsers() {
-    return Promise.all(
-      this.props.uids.map(uid => {
-        return getUser(uid)
-      })
-    )
+  componentWillUnmount() {
+    this.isUnmounting = true
   }
 
-  renderUser(user) {
+  getUsers(users) {
+    if (!users) users = this.props.users
 
+    const promises = users.map(uid => getUser(uid))
+
+    return Promise.all(promises)
+  }
+
+  renderUsers() {
+    return this.state.users.map(user => {
+      if (!user) return null
+
+      return (
+        <Link to={`/users/${user.uid}`} key={user.uid}>
+          <div className='user'>
+            <div className='profile-picture'></div>
+            <div className='info'>
+              <h3>{user.fullName}</h3>
+              <h5>@{user.username}</h5>
+            </div>
+          </div>
+        </Link>
+      )
+    })
   }
 
   render() {
-    console.log(this.state.users)
     return (
-      <div className='user-list'>{this.props.children}</div>
+      <div className='user-list'>
+        {this.renderUsers()}
+      </div>
     )
   }
 }

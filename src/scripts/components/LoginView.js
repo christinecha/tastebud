@@ -42,7 +42,7 @@ class LoginView extends React.Component {
 
   render() {
     return (
-      <main id='login-view'>
+      <main id='login-view' className='view'>
         <h1> Login </h1>
         <form onSubmit={this.handleSubmit}>
           <div className='form-group'>

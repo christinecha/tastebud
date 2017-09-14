@@ -13,6 +13,8 @@ import SavePlaceView from './SavePlaceView'
 import SearchView from './SearchView'
 import SignupView from './SignupView/index'
 import UserView from './UserView/index'
+import FollowersView from './FollowersView'
+import FollowingView from './FollowingView'
 
 import { getCurrentUser, watchAuthState } from '../db/auth'
 import { getUser, saveUser, createUserFromFacebookRedirect } from '../db/user'
@@ -110,7 +112,9 @@ class App extends React.Component {
             <Route path='/signup' component={SignupView} />
             <PropsRoute path='/save-place' component={SavePlaceView} {...this.props} />
             <PropsRoute path='/search' component={SearchView} {...this.props} />
-            <PropsRoute path='/users/:uid' component={UserView} {...this.props} />
+            <PropsRoute exact path='/users/:uid' component={UserView} {...this.props} />
+            <PropsRoute path='/users/:uid/followers' component={FollowersView} {...this.props} />
+            <PropsRoute path='/users/:uid/following' component={FollowingView} {...this.props} />
             <Redirect from='*' to='/' />
           </Switch>
         </div>
