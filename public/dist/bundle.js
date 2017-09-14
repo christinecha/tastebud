@@ -3694,7 +3694,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var saveUser = exports.saveUser = function saveUser(_userData) {
   var userData = (0, _createUserObject2.default)(_userData);
   return _firebase.ref.child('users/' + userData.uid).set(userData, function (n) {
-    return console.log('done');
+    return console.log('done', userData);
   });
 };
 
@@ -3709,16 +3709,15 @@ var updateUser = exports.updateUser = function updateUser(id, data) {
 var createUserFromFacebookRedirect = exports.createUserFromFacebookRedirect = function createUserFromFacebookRedirect(callback) {
   (0, _auth.getUserFromFacebook)().then(function (result) {
     var fbUser = result.user;
+    console.log('fb', fbUser);
 
     if (!fbUser) return;
 
-    var userRef = _firebase.ref.child('users').push();
-
     saveUser({
       fullName: fbUser.displayName,
-      uid: userRef.key
+      uid: fbUser.uid
     }).then(function () {
-      return callback(userRef.key);
+      return callback(fbUser.uid);
     });
   });
 };
@@ -29176,8 +29175,10 @@ var App = function (_React$Component) {
         if (user) return _this3.handleLogin(user);
 
         (0, _user2.createUserFromFacebookRedirect)(function (uid) {
+          console.log('uid', uid);
           (0, _user2.getUser)(uid).then(function (_snapshot) {
             var _user = _snapshot.val();
+            console.log('user', _user);
             if (_user) _this3.handleLogin(_user);
           });
         });

@@ -4,7 +4,7 @@ import createUserObject from '../lib/createUserObject'
 
 export const saveUser = (_userData) => {
   const userData = createUserObject(_userData)
-  return ref.child(`users/${userData.uid}`).set(userData, (n) => console.log('done'))
+  return ref.child(`users/${userData.uid}`).set(userData, (n) => console.log('done', userData))
 }
 
 export const getUser = (id) => {
@@ -18,16 +18,15 @@ export const updateUser = (id, data) => {
 export const createUserFromFacebookRedirect = (callback) => {
   getUserFromFacebook().then(result => {
     const fbUser = result.user
+    console.log('fb', fbUser)
 
     if (!fbUser) return
 
-    const userRef = ref.child('users').push()
-
     saveUser({
       fullName: fbUser.displayName,
-      uid: userRef.key
+      uid: fbUser.uid
     })
-    .then(() => callback(userRef.key))
+    .then(() => callback(fbUser.uid))
   })
 }
 

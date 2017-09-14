@@ -69,8 +69,10 @@ class App extends React.Component {
       if (user) return this.handleLogin(user)
 
       createUserFromFacebookRedirect((uid) => {
+        console.log('uid', uid)
         getUser(uid).then(_snapshot => {
           const _user = _snapshot.val()
+          console.log('user', _user)
           if (_user) this.handleLogin(_user)
         })
       })
