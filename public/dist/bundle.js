@@ -29990,6 +29990,8 @@ var MapView = function (_React$Component) {
 
     var _this = _possibleConstructorReturn(this, (MapView.__proto__ || Object.getPrototypeOf(MapView)).call(this, props));
 
+    _this.addPlace = _this.addPlace.bind(_this);
+
     _this.state = {
       places: []
     };
@@ -30014,30 +30016,36 @@ var MapView = function (_React$Component) {
 
       var currentUser = this.props.currentUser;
 
-
       if (!currentUser) return;
-      if (!currentUser.following) return;
 
+      currentUser.places.forEach(this.addPlace);
+
+      if (!currentUser.following) return;
       currentUser.following.forEach(function (userId) {
         (0, _user.getUser)(userId).then(function (userSnapshot) {
           var user = userSnapshot.val();
           if (!user.places) return;
 
-          user.places.forEach(function (place) {
-            (0, _place.getPlace)(place).then(function (snapshot) {
-              var places = _this2.state.places;
-              var location = snapshot.val();
-              if (!location) return;
-
-              places.push(location);
-              _this2.renderPlaceMarker(location);
-
-              if (_this2.isUnmounting) return;
-
-              _this2.setState({ places: places });
-            });
-          });
+          user.places.forEach(_this2.addPlace);
         });
+      });
+    }
+  }, {
+    key: 'addPlace',
+    value: function addPlace(place) {
+      var _this3 = this;
+
+      (0, _place.getPlace)(place).then(function (snapshot) {
+        var places = _this3.state.places;
+        var location = snapshot.val();
+        if (!location) return;
+
+        places.push(location);
+        _this3.renderPlaceMarker(location);
+
+        if (_this3.isUnmounting) return;
+
+        _this3.setState({ places: places });
       });
     }
   }, {
@@ -30069,7 +30077,7 @@ var MapView = function (_React$Component) {
   }, {
     key: 'render',
     value: function render() {
-      var _this3 = this;
+      var _this4 = this;
 
       return _react2.default.createElement(
         'main',
@@ -30080,7 +30088,7 @@ var MapView = function (_React$Component) {
           'map'
         ),
         _react2.default.createElement('div', { id: 'google-maps', ref: function ref($map) {
-            return _this3.$map = $map;
+            return _this4.$map = $map;
           } })
       );
     }
@@ -32481,7 +32489,7 @@ exports = module.exports = __webpack_require__(267)();
 
 
 // module
-exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\nbody {\n  min-height: 100vh;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 90%;\n  max-width: 375px;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\n.view {\n  padding: 8%;\n  min-height: 500px;\n  height: 75vh;\n  box-sizing: border-box;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 90%;\n  max-width: 375px;\n  height: 60px;\n  padding: 8%;\n  background-color: #fff;\n  display: flex;\n  justify-content: space-between;\n}\n#header .nav-item {\n  flex: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n  min-height: 500px;\n}\n#search-view .search-input {\n  width: 100%;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n#signup-view .signup-form .input-wrapper {\n  position: relative;\n}\n#signup-view .signup-form .icon {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(215) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view .edit-profile {\n  position: fixed;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: fixed;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(215) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n#user-view .places {\n  padding-top: 10px;\n}\n#user-view .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n}\n", ""]);
+exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\nbody {\n  min-height: 100vh;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 90%;\n  max-width: 375px;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\n.view {\n  padding: 20px;\n  min-height: 500px;\n  height: 75vh;\n  box-sizing: border-box;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 90%;\n  max-width: 375px;\n  height: 60px;\n  padding: 8%;\n  background-color: #fff;\n  display: flex;\n  justify-content: space-between;\n}\n#header .nav-item {\n  flex: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n  min-height: 500px;\n}\n#search-view .search-input {\n  width: 100%;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n#signup-view .signup-form .input-wrapper {\n  position: relative;\n}\n#signup-view .signup-form .icon {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(215) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view .edit-profile {\n  position: fixed;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: fixed;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(215) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n#user-view .places {\n  padding-top: 10px;\n}\n#user-view .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n}\n", ""]);
 
 // exports
 

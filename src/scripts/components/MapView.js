@@ -10,6 +10,8 @@ class MapView extends React.Component {
   constructor(props) {
     super(props)
 
+    this.addPlace = this.addPlace.bind(this)
+
     this.state = {
       places: []
     }
@@ -26,30 +28,33 @@ class MapView extends React.Component {
 
   getPlaces() {
     const { currentUser } = this.props
-
     if (!currentUser) return
-    if (!currentUser.following) return
 
+    currentUser.places.forEach(this.addPlace)
+
+    if (!currentUser.following) return
     currentUser.following.forEach(userId => {
       getUser(userId).then(userSnapshot => {
         const user = userSnapshot.val()
         if (!user.places) return
 
-        user.places.forEach(place => {
-          getPlace(place).then(snapshot => {
-            let places = this.state.places
-            const location = snapshot.val()
-            if (!location) return
-
-            places.push(location)
-            this.renderPlaceMarker(location)
-
-            if (this.isUnmounting) return
-
-            this.setState({ places: places })
-          })
-        })
+        user.places.forEach(this.addPlace)
       })
+    })
+  }
+
+  addPlace(place) {
+    getPlace(place).then(snapshot => {
+      let places = this.state.places
+      const location = snapshot.val()
+      if (!location) return
+
+      places.push(location)
+      this.renderPlaceMarker(location)
+
+      if (this.isUnmounting) return
+
+      this.setState({ places: places })
     })
   }
 
