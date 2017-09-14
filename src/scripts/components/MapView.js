@@ -5,6 +5,8 @@ import GoogleMaps from 'google-maps'
 import { getPlace } from '../db/place'
 import { getUser } from '../db/user'
 
+import mapStyle from '../constants/map-style'
+
 
 class MapView extends React.Component {
   constructor(props) {
@@ -81,6 +83,8 @@ class MapView extends React.Component {
       {
         center: {lat: 40.725493, lng: -74.004167},
         scrollwheel: false,
+        streetViewControl: false,
+        styles: mapStyle,
         zoom: 12
       }
     )
