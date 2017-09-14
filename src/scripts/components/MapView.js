@@ -88,8 +88,7 @@ class MapView extends React.Component {
 
   render() {
     return (
-      <main id='map-view'>
-        <h1>map</h1>
+      <main id='map-view' className='view'>
         <div id='google-maps' ref={$map => this.$map = $map}></div>
       </main>
     )
