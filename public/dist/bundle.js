@@ -29132,7 +29132,17 @@ var App = function (_React$Component) {
         return _this2.handleHistoryListen(location);
       });
 
+      setTimeout(function () {
+        if (_this2.isUnmounting) return;
+        _this2.setState({ isLoading: false });
+      }, 5000);
+
       (0, _auth.watchAuthState)(this.handleAuthStateChange);
+    }
+  }, {
+    key: 'componentWillUnmount',
+    value: function componentWillUnmount() {
+      this.isUnmounting = true;
     }
   }, {
     key: 'handleLogin',

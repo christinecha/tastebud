@@ -33,7 +33,16 @@ class App extends React.Component {
   componentWillMount() {
     this.props.history.listen(location => this.handleHistoryListen(location))
 
+    setTimeout(() => {
+      if (this.isUnmounting) return
+      this.setState({ isLoading: false })
+    }, 5000)
+
     watchAuthState(this.handleAuthStateChange)
+  }
+
+  componentWillUnmount() {
+    this.isUnmounting = true
   }
 
   handleLogin(user) {
