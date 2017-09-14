@@ -66,7 +66,8 @@ class MapView extends React.Component {
          lat: location.lat,
          lng: location.lng
        },
-       title: location.name
+       title: location.name,
+       label: location.name
      })
 
      marker.setMap(this.map)

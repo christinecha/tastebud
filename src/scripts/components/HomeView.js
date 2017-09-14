@@ -21,14 +21,19 @@ class HomeView extends React.Component {
 
   render() {
     return (
-      <main id='home-view'>
-        <h1>Whatever</h1>
+      <main id='home-view' className='view'>
+        <h1>Tastemark</h1>
 
         <button className='button facebook full-width' onClick={this.signInWithFacebook}>Sign In With Facebook</button>
 
         <Link to='/signup'>
           <button className='button full-width knockout'>Sign Up With Email</button>
         </Link>
+
+        <div className='log-in-prompt'>
+          Already have an account?
+          <Link to='/login' className='log-in'>Log In</Link>
+        </div>
       </main>
     )
   }
