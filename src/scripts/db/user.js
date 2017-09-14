@@ -11,6 +11,10 @@ export const getUser = (id) => {
   return ref.child(`users/${id}`).once('value')
 }
 
+export const watchUser = (id, callback) => {
+  return ref.child(`users/${id}`).on('value', callback)
+}
+
 export const updateUser = (id, data) => {
   return ref.child(`users/${id}`).update(data)
 }
@@ -18,7 +22,6 @@ export const updateUser = (id, data) => {
 export const createUserFromFacebookRedirect = (callback) => {
   getUserFromFacebook().then(result => {
     const fbUser = result.user
-    console.log('fb', fbUser)
 
     if (!fbUser) return
 

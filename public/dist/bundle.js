@@ -3679,7 +3679,7 @@ module.exports = { debugTool: debugTool };
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.updateUserFollowing = exports.followUser = exports.createUserFromFacebookRedirect = exports.updateUser = exports.getUser = exports.saveUser = undefined;
+exports.updateUserFollowing = exports.followUser = exports.createUserFromFacebookRedirect = exports.updateUser = exports.watchUser = exports.getUser = exports.saveUser = undefined;
 
 var _firebase = __webpack_require__(78);
 
@@ -3702,6 +3702,10 @@ var getUser = exports.getUser = function getUser(id) {
   return _firebase.ref.child('users/' + id).once('value');
 };
 
+var watchUser = exports.watchUser = function watchUser(id, callback) {
+  return _firebase.ref.child('users/' + id).on('value', callback);
+};
+
 var updateUser = exports.updateUser = function updateUser(id, data) {
   return _firebase.ref.child('users/' + id).update(data);
 };
@@ -3709,7 +3713,6 @@ var updateUser = exports.updateUser = function updateUser(id, data) {
 var createUserFromFacebookRedirect = exports.createUserFromFacebookRedirect = function createUserFromFacebookRedirect(callback) {
   (0, _auth.getUserFromFacebook)().then(function (result) {
     var fbUser = result.user;
-    console.log('fb', fbUser);
 
     if (!fbUser) return;
 
@@ -29138,7 +29141,7 @@ var App = function (_React$Component) {
       setTimeout(function () {
         if (_this2.isUnmounting) return;
         _this2.setState({ isLoading: false });
-      }, 3000);
+      }, 2000);
 
       (0, _auth.watchAuthState)(this.handleAuthStateChange);
     }
@@ -29175,10 +29178,8 @@ var App = function (_React$Component) {
         if (user) return _this3.handleLogin(user);
 
         (0, _user2.createUserFromFacebookRedirect)(function (uid) {
-          console.log('uid', uid);
           (0, _user2.getUser)(uid).then(function (_snapshot) {
             var _user = _snapshot.val();
-            console.log('user', _user);
             if (_user) _this3.handleLogin(_user);
           });
         });
@@ -30744,7 +30745,7 @@ var UserView = function (_React$Component) {
       var pathParts = pathname.split('/');
       var userId = pathParts[pathParts.length - 1];
 
-      (0, _user.getUser)(userId).then(function (snapshot) {
+      (0, _user.watchUser)(userId, function (snapshot) {
         if (_this2.isUnmounting) return;
 
         var user = snapshot.val();
