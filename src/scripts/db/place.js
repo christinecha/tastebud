@@ -1,5 +1,6 @@
 import { ref } from '../constants/firebase'
 import createPlaceObject from '../lib/createPlaceObject'
+import { getUser } from './user'
 
 export const isDupePlace = (locationData) => {
   return new Promise((resolve, reject) => {
@@ -50,4 +51,27 @@ export const addUserToPlace = (placeId, userId) => {
     users.push(userId)
     updatePlace(placeId, { users })
   })
+}
+
+export const getPlaceIdsFromUsers = (users) => {
+  return Promise.all(users.map(userId => {
+    return new Promise((resolve, reject) => {
+      getUser(userId)
+      .then(userSnapshot => {
+        const user = userSnapshot.val()
+        resolve(user.places || [])
+      })
+    })
+  }))
+}
+
+export const getPlaces = (places) => {
+  return Promise.all(places.map(place => {
+    return new Promise((resolve, reject) => {
+      getPlace(place)
+      .then(snapshot => {
+        resolve(snapshot.val())
+      })
+    })
+  }))
 }

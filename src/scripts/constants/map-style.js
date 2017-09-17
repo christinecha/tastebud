@@ -3,7 +3,7 @@ const mapStyle = [
     "elementType": "geometry",
     "stylers": [
       {
-        "color": "#f5f5f5"
+        "color": "#d3d2d4"
       }
     ]
   },
@@ -19,7 +19,7 @@ const mapStyle = [
     "elementType": "labels.text.fill",
     "stylers": [
       {
-        "color": "#616161"
+        "color": "#3f3f40"
       }
     ]
   },
@@ -50,14 +50,6 @@ const mapStyle = [
     ]
   },
   {
-    "featureType": "administrative.neighborhood",
-    "stylers": [
-      {
-        "visibility": "off"
-      }
-    ]
-  },
-  {
     "featureType": "poi",
     "stylers": [
       {
@@ -71,15 +63,6 @@ const mapStyle = [
     "stylers": [
       {
         "color": "#eeeeee"
-      }
-    ]
-  },
-  {
-    "featureType": "poi",
-    "elementType": "labels.text",
-    "stylers": [
-      {
-        "visibility": "off"
       }
     ]
   },
@@ -121,10 +104,10 @@ const mapStyle = [
   },
   {
     "featureType": "road",
-    "elementType": "labels",
+    "elementType": "geometry.fill",
     "stylers": [
       {
-        "visibility": "off"
+        "color": "#edebf0"
       }
     ]
   },
@@ -134,6 +117,15 @@ const mapStyle = [
     "stylers": [
       {
         "visibility": "off"
+      }
+    ]
+  },
+  {
+    "featureType": "road",
+    "elementType": "labels.text",
+    "stylers": [
+      {
+        "color": "#f8f7ff"
       }
     ]
   },
@@ -205,15 +197,6 @@ const mapStyle = [
     "stylers": [
       {
         "color": "#c9c9c9"
-      }
-    ]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text",
-    "stylers": [
-      {
-        "visibility": "off"
       }
     ]
   },

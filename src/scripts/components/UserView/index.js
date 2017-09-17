@@ -9,6 +9,8 @@ class UserView extends React.Component {
   constructor(props) {
     super(props)
 
+    this.getUserPlaces = this.getUserPlaces.bind(this)
+
     this.state = {
       user: null,
       places: [],
@@ -23,7 +25,7 @@ class UserView extends React.Component {
       if (this.isUnmounting) return
 
       const user = snapshot.val()
-      this.setState({ user })
+      this.setState({ user }, this.getUserPlaces)
 
       const { currentUser } = this.props
       if (currentUser && user.uid === currentUser.uid) {
@@ -32,8 +34,6 @@ class UserView extends React.Component {
           saveUser(currentUser)
         }
       }
-
-      this.getUserPlaces()
     })
   }
 
@@ -63,7 +63,7 @@ class UserView extends React.Component {
         if (this.isUnmounting) return
 
         const place = snapshot.val()
-
+console.log('va', place)
         if (!place) return
 
         getFollowerInfo(place, user).then((msg) => {
@@ -82,6 +82,7 @@ class UserView extends React.Component {
   }
 
   renderPlaces() {
+    console.log(this.state.places)
     return this.state.places.map((place) => {
       if (!place) return null
 

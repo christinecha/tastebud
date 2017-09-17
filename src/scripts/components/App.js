@@ -41,6 +41,18 @@ class App extends React.Component {
     }, 2000)
 
     watchAuthState(this.handleAuthStateChange)
+
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(position => {
+        const { latitude, longitude } = position.coords
+        const currentLocation = {
+          lat: latitude,
+          lng: longitude
+        }
+
+        this.props.updateCurrentLocation(currentLocation)
+      })
+    }
   }
 
   componentWillUnmount() {

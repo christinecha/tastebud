@@ -5,23 +5,34 @@
   right: 0;
   margin: auto;
 
-  width: 90%;
+  width: 100%;
   max-width: 375px;
-  height: 60px;
+  height: @header-height;
 
-  padding: 20px;
+  padding: 15px;
+  box-sizing: border-box;
 
   background-color: @white;
 
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
+
+  background-color: @light-gray;
 
   .nav-item {
-    width: 22%;
+    width: 25%;
     display: flex;
     align-items: center;
     justify-content: center;
 
-    background-color: @light-gray;
+    border-right: 1px solid @medium-gray;
+
+    &:last-child {
+      border: none;
+    }
+
+    .label {
+      font-size: 8px;
+    }
   }
 }
