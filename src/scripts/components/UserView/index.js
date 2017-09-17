@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { followUser, getUser, saveUser, watchUser } from '../../db/user'
 import { getPlace } from '../../db/place'
 import EditUser from './EditUser'
-import { getFollowerInfo } from './lib/getFollowerInfo'
+import { getFollowerInfo } from '../../lib/getFollowerInfo'
 
 class UserView extends React.Component {
   constructor(props) {
@@ -63,7 +63,7 @@ class UserView extends React.Component {
         if (this.isUnmounting) return
 
         const place = snapshot.val()
-console.log('va', place)
+
         if (!place) return
 
         getFollowerInfo(place, user).then((msg) => {
@@ -82,7 +82,6 @@ console.log('va', place)
   }
 
   renderPlaces() {
-    console.log(this.state.places)
     return this.state.places.map((place) => {
       if (!place) return null
 

@@ -115,21 +115,19 @@ class App extends React.Component {
     return (
       <div className='content-wrapper'>
         <Header {...this.props} />
-        <div>
-          <Switch>
-            <Route exact path='/' component={HomeView} />
-            <PropsRoute path='/map' component={MapView} {...this.props} />
-            <Route path='/sample' component={SampleComponent} />
-            <PropsRoute path='/login' component={LoginView} {...this.props} />
-            <Route path='/signup' component={SignupView} />
-            <PropsRoute path='/save-place' component={SavePlaceView} {...this.props} />
-            <PropsRoute path='/search' component={SearchView} {...this.props} />
-            <PropsRoute exact path='/users/:uid' component={UserView} {...this.props} />
-            <PropsRoute path='/users/:uid/followers' component={FollowersView} {...this.props} />
-            <PropsRoute path='/users/:uid/following' component={FollowingView} {...this.props} />
-            <Redirect from='*' to='/' />
-          </Switch>
-        </div>
+        <Switch>
+          <Route exact path='/' component={HomeView} />
+          <PropsRoute path='/map' component={MapView} {...this.props} />
+          <Route path='/sample' component={SampleComponent} />
+          <PropsRoute path='/login' component={LoginView} {...this.props} />
+          <Route path='/signup' component={SignupView} />
+          <PropsRoute path='/save-place' component={SavePlaceView} {...this.props} />
+          <PropsRoute path='/search' component={SearchView} {...this.props} />
+          <PropsRoute exact path='/users/:uid' component={UserView} {...this.props} />
+          <PropsRoute path='/users/:uid/followers' component={FollowersView} {...this.props} />
+          <PropsRoute path='/users/:uid/following' component={FollowingView} {...this.props} />
+          <Redirect from='*' to='/' />
+        </Switch>
       </div>
     )
   }

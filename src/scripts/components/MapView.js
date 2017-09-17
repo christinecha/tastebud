@@ -5,6 +5,7 @@ import 'js-marker-clusterer'
 
 import { getPlaces, getPlaceIdsFromUsers } from '../db/place'
 import { getUser } from '../db/user'
+import { getFollowerInfo } from '../lib/getFollowerInfo'
 
 import mapStyle from '../constants/map-style'
 
@@ -15,6 +16,8 @@ class MapView extends React.Component {
 
     this.state = {
       places: [],
+      followerInfo: [],
+      activePlaceIndex: null,
       markers: []
     }
   }
@@ -22,6 +25,7 @@ class MapView extends React.Component {
   componentDidMount() {
     this.generateMap()
     this.renderMap()
+    this.renderCurrentLocationMarker()
   }
 
   componentWillUnmount() {
@@ -39,6 +43,15 @@ class MapView extends React.Component {
 
       getPlaces(placeIds).then(places => {
         if (this.isUnmounting) return
+
+        const promises = places.map(place => getFollowerInfo(place, currentUser))
+
+        Promise.all(promises)
+        .then(messages => {
+          if (this.isUnmounting) return
+
+          this.setState({ followerInfo: messages })
+        })
 
         this.setState({ places: places })
 
@@ -68,7 +81,7 @@ class MapView extends React.Component {
       scaledSize : new google.maps.Size(22, 32),
     }
 
-    const markers = this.state.places.map(place => {
+    const markers = this.state.places.map((place, i) => {
       if (!place) return
 
       const marker = new google.maps.Marker({
@@ -81,11 +94,34 @@ class MapView extends React.Component {
        })
 
        marker.setMap(this.map)
+       marker.addListener('click', () => {
+         this.map.setCenter(marker.getPosition())
+         this.setState({ activePlaceIndex: i })
+       })
 
        return marker
     })
 
     this.setState({ markers })
+  }
+
+  renderCurrentLocationMarker() {
+    if (!this.map) return
+
+    const markerImage = {
+      url: '/assets/images/marker-blue.svg',
+      scaledSize : new google.maps.Size(22, 32),
+    }
+
+    const marker = new google.maps.Marker({
+      position: this.props.currentLocation,
+      icon: markerImage,
+      label: ' ',
+      optimized: false,
+      zIndex: 1000
+    })
+
+     marker.setMap(this.map)
   }
 
   generateMap() {
@@ -107,10 +143,47 @@ class MapView extends React.Component {
     )
   }
 
+  getDistance(point1, point2 = this.props.currentLocation) {
+    const latLng1 = new google.maps.LatLng(point1.lat, point1.lng)
+    const latLng2 = new google.maps.LatLng(point2.lat, point2.lng)
+    const meters = google.maps.geometry.spherical.computeDistanceBetween(latLng1, latLng2)
+
+    const feet = meters * 3.28084
+    const miles = feet * 0.000189394
+
+    if (feet > 800) return `${miles.toFixed(1)} mi`
+
+    return `${Math.round(feet)} ft`
+  }
+
+  renderPlacePreview() {
+    if (this.state.activePlaceIndex === null) return null
+
+    const activePlace = this.state.places[this.state.activePlaceIndex]
+    if (!activePlace) return null
+
+    const latLng = {
+      lat: activePlace.lat,
+      lng: activePlace.lng
+    }
+
+    return (
+      <div className='place-preview'>
+        <div className='place-preview-content'>
+          <h3>{activePlace.name}</h3>
+          <p className='label'>{this.getDistance(latLng)}</p>
+          <hr />
+          <p className='label'>{this.state.followerInfo[this.state.activePlaceIndex]}</p>
+        </div>
+      </div>
+    )
+  }
+
   render() {
     return (
       <main id='map-view' className='view'>
         <div id='google-maps' ref={$map => this.$map = $map}></div>
+        {this.renderPlacePreview()}
       </main>
     )
   }

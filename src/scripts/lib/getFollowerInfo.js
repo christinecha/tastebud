@@ -1,24 +1,29 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { getUser } from '../../../db/user'
+import { getUser } from '../db/user'
 
 const renderLinkToUser = (user) => {
   return <Link to={`/users/${user.uid}`}>{user.username}</Link>
 }
 
-export const getFollowerInfo = (place, user) => {
+export const getFollowerInfo = (place, currentUser) => {
   return new Promise((resolve, reject) => {
     const usersOfPlace = place.users || []
-    const following = user.following || []
+    const following = currentUser.following || []
 
     if (!usersOfPlace.length === 0) return resolve('')
 
     let followedUsers = []
     let remaining = usersOfPlace.length
 
-    usersOfPlace.forEach(user => {
-      if (following.indexOf(user) > -1) followedUsers.push(user)
+    usersOfPlace.forEach(userId => {
+      if (currentUser.uid === userId) return remaining -= 1
+      if (following.indexOf(userId) > -1) followedUsers.push(userId)
     })
+
+    if (remaining === 0) {
+      return resolve(null)
+    }
 
     if (followedUsers.length === 0) {
       return resolve(`${remaining} others`)

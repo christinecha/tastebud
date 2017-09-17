@@ -29415,23 +29415,19 @@ var App = function (_React$Component) {
         { className: 'content-wrapper' },
         _react2.default.createElement(_index2.default, this.props),
         _react2.default.createElement(
-          'div',
+          _reactRouterDom.Switch,
           null,
-          _react2.default.createElement(
-            _reactRouterDom.Switch,
-            null,
-            _react2.default.createElement(_reactRouterDom.Route, { exact: true, path: '/', component: _HomeView2.default }),
-            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/map', component: _MapView2.default }, this.props)),
-            _react2.default.createElement(_reactRouterDom.Route, { path: '/sample', component: _SampleComponent2.default }),
-            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/login', component: _LoginView2.default }, this.props)),
-            _react2.default.createElement(_reactRouterDom.Route, { path: '/signup', component: _index4.default }),
-            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/save-place', component: _SavePlaceView2.default }, this.props)),
-            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/search', component: _SearchView2.default }, this.props)),
-            _react2.default.createElement(_PropsRoute2.default, _extends({ exact: true, path: '/users/:uid', component: _index6.default }, this.props)),
-            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid/followers', component: _FollowersView2.default }, this.props)),
-            _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid/following', component: _FollowingView2.default }, this.props)),
-            _react2.default.createElement(_reactRouterDom.Redirect, { from: '*', to: '/' })
-          )
+          _react2.default.createElement(_reactRouterDom.Route, { exact: true, path: '/', component: _HomeView2.default }),
+          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/map', component: _MapView2.default }, this.props)),
+          _react2.default.createElement(_reactRouterDom.Route, { path: '/sample', component: _SampleComponent2.default }),
+          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/login', component: _LoginView2.default }, this.props)),
+          _react2.default.createElement(_reactRouterDom.Route, { path: '/signup', component: _index4.default }),
+          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/save-place', component: _SavePlaceView2.default }, this.props)),
+          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/search', component: _SearchView2.default }, this.props)),
+          _react2.default.createElement(_PropsRoute2.default, _extends({ exact: true, path: '/users/:uid', component: _index6.default }, this.props)),
+          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid/followers', component: _FollowersView2.default }, this.props)),
+          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid/following', component: _FollowingView2.default }, this.props)),
+          _react2.default.createElement(_reactRouterDom.Redirect, { from: '*', to: '/' })
         )
       );
     }
@@ -30047,6 +30043,8 @@ var _place = __webpack_require__(48);
 
 var _user = __webpack_require__(13);
 
+var _getFollowerInfo = __webpack_require__(497);
+
 var _mapStyle = __webpack_require__(260);
 
 var _mapStyle2 = _interopRequireDefault(_mapStyle);
@@ -30069,6 +30067,8 @@ var MapView = function (_React$Component) {
 
     _this.state = {
       places: [],
+      followerInfo: [],
+      activePlaceIndex: null,
       markers: []
     };
     return _this;
@@ -30079,6 +30079,7 @@ var MapView = function (_React$Component) {
     value: function componentDidMount() {
       this.generateMap();
       this.renderMap();
+      this.renderCurrentLocationMarker();
     }
   }, {
     key: 'componentWillUnmount',
@@ -30100,6 +30101,16 @@ var MapView = function (_React$Component) {
 
         (0, _place.getPlaces)(placeIds).then(function (places) {
           if (_this2.isUnmounting) return;
+
+          var promises = places.map(function (place) {
+            return (0, _getFollowerInfo.getFollowerInfo)(place, currentUser);
+          });
+
+          Promise.all(promises).then(function (messages) {
+            if (_this2.isUnmounting) return;
+
+            _this2.setState({ followerInfo: messages });
+          });
 
           _this2.setState({ places: places });
 
@@ -30129,7 +30140,7 @@ var MapView = function (_React$Component) {
         scaledSize: new google.maps.Size(22, 32)
       };
 
-      var markers = this.state.places.map(function (place) {
+      var markers = this.state.places.map(function (place, i) {
         if (!place) return;
 
         var marker = new google.maps.Marker({
@@ -30142,11 +30153,35 @@ var MapView = function (_React$Component) {
         });
 
         marker.setMap(_this3.map);
+        marker.addListener('click', function () {
+          _this3.map.setCenter(marker.getPosition());
+          _this3.setState({ activePlaceIndex: i });
+        });
 
         return marker;
       });
 
       this.setState({ markers: markers });
+    }
+  }, {
+    key: 'renderCurrentLocationMarker',
+    value: function renderCurrentLocationMarker() {
+      if (!this.map) return;
+
+      var markerImage = {
+        url: '/assets/images/marker-blue.svg',
+        scaledSize: new google.maps.Size(22, 32)
+      };
+
+      var marker = new google.maps.Marker({
+        position: this.props.currentLocation,
+        icon: markerImage,
+        label: ' ',
+        optimized: false,
+        zIndex: 1000
+      });
+
+      marker.setMap(this.map);
     }
   }, {
     key: 'generateMap',
@@ -30166,6 +30201,60 @@ var MapView = function (_React$Component) {
       });
     }
   }, {
+    key: 'getDistance',
+    value: function getDistance(point1) {
+      var point2 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.props.currentLocation;
+
+      var latLng1 = new google.maps.LatLng(point1.lat, point1.lng);
+      var latLng2 = new google.maps.LatLng(point2.lat, point2.lng);
+      var meters = google.maps.geometry.spherical.computeDistanceBetween(latLng1, latLng2);
+
+      var feet = meters * 3.28084;
+      var miles = feet * 0.000189394;
+
+      if (feet > 800) return miles.toFixed(1) + ' mi';
+
+      return Math.round(feet) + ' ft';
+    }
+  }, {
+    key: 'renderPlacePreview',
+    value: function renderPlacePreview() {
+      if (this.state.activePlaceIndex === null) return null;
+
+      var activePlace = this.state.places[this.state.activePlaceIndex];
+      if (!activePlace) return null;
+
+      var latLng = {
+        lat: activePlace.lat,
+        lng: activePlace.lng
+      };
+
+      return _react2.default.createElement(
+        'div',
+        { className: 'place-preview' },
+        _react2.default.createElement(
+          'div',
+          { className: 'place-preview-content' },
+          _react2.default.createElement(
+            'h3',
+            null,
+            activePlace.name
+          ),
+          _react2.default.createElement(
+            'p',
+            { className: 'label' },
+            this.getDistance(latLng)
+          ),
+          _react2.default.createElement('hr', null),
+          _react2.default.createElement(
+            'p',
+            { className: 'label' },
+            this.state.followerInfo[this.state.activePlaceIndex]
+          )
+        )
+      );
+    }
+  }, {
     key: 'render',
     value: function render() {
       var _this4 = this;
@@ -30175,7 +30264,8 @@ var MapView = function (_React$Component) {
         { id: 'map-view', className: 'view' },
         _react2.default.createElement('div', { id: 'google-maps', ref: function ref($map) {
             return _this4.$map = $map;
-          } })
+          } }),
+        this.renderPlacePreview()
       );
     }
   }]);
@@ -31100,7 +31190,7 @@ var _EditUser = __webpack_require__(256);
 
 var _EditUser2 = _interopRequireDefault(_EditUser);
 
-var _getFollowerInfo = __webpack_require__(258);
+var _getFollowerInfo = __webpack_require__(497);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -31183,7 +31273,7 @@ var UserView = function (_React$Component) {
           if (_this3.isUnmounting) return;
 
           var place = snapshot.val();
-          console.log('va', place);
+
           if (!place) return;
 
           (0, _getFollowerInfo.getFollowerInfo)(place, user).then(function (msg) {
@@ -31205,7 +31295,6 @@ var UserView = function (_React$Component) {
   }, {
     key: 'renderPlaces',
     value: function renderPlaces() {
-      console.log(this.state.places);
       return this.state.places.map(function (place) {
         if (!place) return null;
 
@@ -31381,114 +31470,7 @@ var UserView = function (_React$Component) {
 exports.default = UserView;
 
 /***/ }),
-/* 258 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.getFollowerInfo = undefined;
-
-var _react = __webpack_require__(4);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _reactRouterDom = __webpack_require__(27);
-
-var _user = __webpack_require__(13);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var renderLinkToUser = function renderLinkToUser(user) {
-  return _react2.default.createElement(
-    _reactRouterDom.Link,
-    { to: '/users/' + user.uid },
-    user.username
-  );
-};
-
-var getFollowerInfo = exports.getFollowerInfo = function getFollowerInfo(place, user) {
-  return new Promise(function (resolve, reject) {
-    var usersOfPlace = place.users || [];
-    var following = user.following || [];
-
-    if (!usersOfPlace.length === 0) return resolve('');
-
-    var followedUsers = [];
-    var remaining = usersOfPlace.length;
-
-    usersOfPlace.forEach(function (user) {
-      if (following.indexOf(user) > -1) followedUsers.push(user);
-    });
-
-    if (followedUsers.length === 0) {
-      return resolve(remaining + ' others');
-    }
-
-    (0, _user.getUser)(followedUsers[0]).then(function (snapshot) {
-      var user1 = snapshot.val();
-      remaining -= 1;
-
-      if (followedUsers.length === 1) {
-        if (remaining === 0) return resolve(_react2.default.createElement(
-          'span',
-          null,
-          renderLinkToUser(user1)
-        ));
-        if (remaining === 1) return resolve(_react2.default.createElement(
-          'span',
-          null,
-          renderLinkToUser(user1),
-          ' and 1 other'
-        ));
-        return resolve(_react2.default.createElement(
-          'span',
-          null,
-          renderLinkToUser(user1),
-          ' and ',
-          remaining,
-          ' others'
-        ));
-      }
-
-      (0, _user.getUser)(followedUsers[1]).then(function (snapshot) {
-        var user2 = snapshot.val();
-        remaining -= 1;
-
-        if (remaining === 0) return resolve(_react2.default.createElement(
-          'span',
-          null,
-          renderLinkToUser(user1),
-          ' and ',
-          renderLinkToUser(user2)
-        ));
-        if (remaining === 1) return resolve(_react2.default.createElement(
-          'span',
-          null,
-          renderLinkToUser(user1),
-          ', ',
-          renderLinkToUser(user2),
-          ', and 1 other'
-        ));
-        return resolve(_react2.default.createElement(
-          'span',
-          null,
-          renderLinkToUser(user1),
-          ', ',
-          renderLinkToUser(user2),
-          ', and ',
-          remaining,
-          ' other'
-        ));
-      });
-    });
-  });
-};
-
-/***/ }),
+/* 258 */,
 /* 259 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -32728,7 +32710,7 @@ exports = module.exports = __webpack_require__(268)();
 
 
 // module
-exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\nbody {\n  min-height: 100vh;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 90%;\n  max-width: 375px;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\n.view {\n  padding: 20px;\n  min-height: 500px;\n  height: 75vh;\n  box-sizing: border-box;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 100%;\n  max-width: 375px;\n  height: 60px;\n  padding: 15px;\n  box-sizing: border-box;\n  background-color: #fff;\n  display: flex;\n  justify-content: space-around;\n  background-color: #f7f7f7;\n}\n#header .nav-item {\n  width: 25%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-right: 1px solid #aaaaaa;\n}\n#header .nav-item:last-child {\n  border: none;\n}\n#header .nav-item .label {\n  font-size: 8px;\n}\n#home-view h1 {\n  margin: 50px 0;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#home-view hr {\n  margin: 20px 40%;\n  border: 1px solid #f7f7f7;\n}\n#home-view .log-in-prompt {\n  margin-top: 30px;\n}\n#home-view .log-in-prompt .log-in {\n  margin-left: 1ch;\n  border-bottom: 1px solid #3c3c3c;\n}\n#map-view {\n  width: 100%;\n  min-height: calc(100vh - 60px);\n  padding: 0;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n  min-height: 400px;\n}\n#search-view .search-input {\n  width: 100%;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n#signup-view .signup-form .input-wrapper {\n  position: relative;\n}\n#signup-view .signup-form .icon {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(215) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view .edit-profile {\n  position: fixed;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: fixed;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(215) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n#user-view .places {\n  padding-top: 10px;\n}\n#user-view .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n}\n", ""]);
+exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\nbody {\n  min-height: 100vh;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 90%;\n  max-width: 375px;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\n.view {\n  padding: 20px;\n  padding-bottom: 60px;\n  min-height: calc(100vh - 60px);\n  box-sizing: border-box;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 100%;\n  max-width: 375px;\n  height: 60px;\n  padding: 15px;\n  box-sizing: border-box;\n  background-color: #fff;\n  display: flex;\n  justify-content: space-around;\n  background-color: #f7f7f7;\n}\n#header .nav-item {\n  width: 25%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-right: 1px solid #aaaaaa;\n}\n#header .nav-item:last-child {\n  border: none;\n}\n#header .nav-item .label {\n  font-size: 8px;\n}\n#home-view h1 {\n  margin: 50px 0;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#home-view hr {\n  margin: 20px 40%;\n  border: 1px solid #f7f7f7;\n}\n#home-view .log-in-prompt {\n  margin-top: 30px;\n}\n#home-view .log-in-prompt .log-in {\n  margin-left: 1ch;\n  border-bottom: 1px solid #3c3c3c;\n}\n#map-view {\n  position: relative;\n  width: 100%;\n  min-height: calc(100vh - 60px);\n  padding: 0;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n  min-height: calc(100vh - 60px);\n}\n#map-view .place-preview {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding: 10px;\n  box-sizing: border-box;\n}\n#map-view .place-preview .place-preview-content {\n  text-align: left;\n  background-color: #fff;\n  border-radius: 3px;\n  padding: 10px;\n}\n#map-view .place-preview .place-preview-content hr {\n  margin-top: 15px;\n  margin-bottom: 15px;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .search-input {\n  width: 100%;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n#signup-view .signup-form .input-wrapper {\n  position: relative;\n}\n#signup-view .signup-form .icon {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(215) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view .edit-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(215) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n#user-view .places {\n  padding-top: 10px;\n}\n#user-view .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n}\n", ""]);
 
 // exports
 
@@ -62342,6 +62324,119 @@ ClusterIcon.prototype['onAdd'] = ClusterIcon.prototype.onAdd;
 ClusterIcon.prototype['draw'] = ClusterIcon.prototype.draw;
 ClusterIcon.prototype['onRemove'] = ClusterIcon.prototype.onRemove;
 
+
+/***/ }),
+/* 497 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getFollowerInfo = undefined;
+
+var _react = __webpack_require__(4);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _reactRouterDom = __webpack_require__(27);
+
+var _user = __webpack_require__(13);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var renderLinkToUser = function renderLinkToUser(user) {
+  return _react2.default.createElement(
+    _reactRouterDom.Link,
+    { to: '/users/' + user.uid },
+    user.username
+  );
+};
+
+var getFollowerInfo = exports.getFollowerInfo = function getFollowerInfo(place, currentUser) {
+  return new Promise(function (resolve, reject) {
+    var usersOfPlace = place.users || [];
+    var following = currentUser.following || [];
+
+    if (!usersOfPlace.length === 0) return resolve('');
+
+    var followedUsers = [];
+    var remaining = usersOfPlace.length;
+
+    usersOfPlace.forEach(function (userId) {
+      if (currentUser.uid === userId) return remaining -= 1;
+      if (following.indexOf(userId) > -1) followedUsers.push(userId);
+    });
+
+    if (remaining === 0) {
+      return resolve(null);
+    }
+
+    if (followedUsers.length === 0) {
+      return resolve(remaining + ' others');
+    }
+
+    (0, _user.getUser)(followedUsers[0]).then(function (snapshot) {
+      var user1 = snapshot.val();
+      remaining -= 1;
+
+      if (followedUsers.length === 1) {
+        if (remaining === 0) return resolve(_react2.default.createElement(
+          'span',
+          null,
+          renderLinkToUser(user1)
+        ));
+        if (remaining === 1) return resolve(_react2.default.createElement(
+          'span',
+          null,
+          renderLinkToUser(user1),
+          ' and 1 other'
+        ));
+        return resolve(_react2.default.createElement(
+          'span',
+          null,
+          renderLinkToUser(user1),
+          ' and ',
+          remaining,
+          ' others'
+        ));
+      }
+
+      (0, _user.getUser)(followedUsers[1]).then(function (snapshot) {
+        var user2 = snapshot.val();
+        remaining -= 1;
+
+        if (remaining === 0) return resolve(_react2.default.createElement(
+          'span',
+          null,
+          renderLinkToUser(user1),
+          ' and ',
+          renderLinkToUser(user2)
+        ));
+        if (remaining === 1) return resolve(_react2.default.createElement(
+          'span',
+          null,
+          renderLinkToUser(user1),
+          ', ',
+          renderLinkToUser(user2),
+          ', and 1 other'
+        ));
+        return resolve(_react2.default.createElement(
+          'span',
+          null,
+          renderLinkToUser(user1),
+          ', ',
+          renderLinkToUser(user2),
+          ', and ',
+          remaining,
+          ' other'
+        ));
+      });
+    });
+  });
+};
 
 /***/ })
 /******/ ]);

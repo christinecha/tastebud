@@ -1,7 +1,7 @@
 .view {
   padding: 20px;
-  min-height: 500px;
-  height: 75vh;
+  padding-bottom: @header-height;
+  min-height: ~'calc(100vh - @{header-height})';
 
   box-sizing: border-box;
 }
