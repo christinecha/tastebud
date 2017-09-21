@@ -74,6 +74,8 @@ class SearchView extends React.Component {
   }
 
   render() {
+    const hasResults = this.state.results.length > 0 ? 'has-results': ''
+
     return (
       <main id='search-view' className='view'>
         <input
@@ -85,7 +87,7 @@ class SearchView extends React.Component {
           value={this.state.searchQuery}
         />
         <div ref={$results => this.$results = $results}></div>
-        <div className='search-results'>
+        <div className={'search-results ' + hasResults}>
           {this.renderResults()}
         </div>
       </main>
