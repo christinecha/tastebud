@@ -1,11 +1,9 @@
 import React from 'react'
-import GoogleMaps from 'google-maps'
+
 import { followUser, getUser, saveUser } from '../../db/user'
 import { getPlace } from '../../db/place'
-import Results from './Results'
+import PlaceList from '../PlaceList'
 import { Instructions } from './static'
-
-const PLACES_AUTOCOMPLETE_API = 'https://maps.googleapis.com/maps/api/place/autocomplete/xml?input=Amoeba&types=establishment&location=37.76999,-122.44696&radius=500&key=YOUR_API_KEY'
 
 class SearchView extends React.Component {
   constructor(props) {
@@ -31,27 +29,29 @@ class SearchView extends React.Component {
   getSearchResults() {
     const now = performance.now()
 
-    if (now - this.lastSearch < 500) {
+    if (now - this.lastSearch < 300) {
       setTimeout(() => {
         this.getSearchResults()
-      }, 500)
+      }, 300)
 
       return
     }
 
     const request = {
-      query: this.state.searchQuery,
-      location: { lat: 40.725493, lng: -74.004167 },
+      keyword: this.state.searchQuery,
+      location: this.props.currentLocation,
+      rankBy: google.maps.places.RankBy.DISTANCE,
       type: [ 'restaurant' ]
     }
 
     this.lastSearch = now
 
-    this.service.textSearch(request, (places, status) => {
+    this.service.nearbySearch(request, (places, status) => {
       if (this.isUnmounting) return
       if (status !== google.maps.places.PlacesServiceStatus.OK) return
 
-      this.setState({ results: places })
+      const firstTenPlaces = places.length > 10 ? places.slice(0, 10) : places
+      this.setState({ results: firstTenPlaces })
     })
   }
 
@@ -65,7 +65,12 @@ class SearchView extends React.Component {
       return <Instructions />
     }
 
-    return <Results results={this.state.results} {...this.props} />
+    return (
+      <PlaceList
+        places={this.state.results}
+        {...this.props}
+      />
+    )
   }
 
   render() {
@@ -80,7 +85,9 @@ class SearchView extends React.Component {
           value={this.state.searchQuery}
         />
         <div ref={$results => this.$results = $results}></div>
-        {this.renderResults()}
+        <div className='search-results'>
+          {this.renderResults()}
+        </div>
       </main>
     )
   }

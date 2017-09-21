@@ -7,6 +7,8 @@ const renderLinkToUser = (user) => {
 }
 
 export const getFollowerInfo = (place, currentUser) => {
+  if (!place) return Promise.resolve()
+
   return new Promise((resolve, reject) => {
     const usersOfPlace = place.users || []
     const following = currentUser.following || []

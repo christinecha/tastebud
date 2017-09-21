@@ -6,8 +6,8 @@ const locationSchema = {
   pricePoint: 0,
   rating: 0,
   types: [],
-  vicinity: '1 Battery Place, New York',
-  recommendedBy: []
+  users: [],
+  vicinity: ''
 }
 
 export default locationSchema

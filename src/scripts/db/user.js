@@ -53,3 +53,19 @@ export const updateUserFollowing = (user, followerId) => {
   followers.push(followerId)
   updateUser(user.uid, { followers })
 }
+
+export const removePlaceFromUser = (user, placeId) => {
+  let places = user.places || []
+  const index = places.indexOf(placeId)
+  if (index < 0) return
+
+  places.splice(index, 1)
+  return updateUser( user.uid, { places })
+}
+
+export const addPlaceToUser = (user, placeId) => {
+  let places = user.places || []
+  if (places.indexOf(placeId) > -1) return
+  places.push(placeId)
+  return updateUser(user.uid, { places })
+}

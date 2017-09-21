@@ -7,7 +7,7 @@ import PropsRoute from './PropsRoute'
 import Header from './Header/index'
 import HomeView from './HomeView'
 import SampleComponent from './SampleComponent'
-import MapView from './MapView'
+import MapView from './MapView/index'
 import LoginView from './LoginView'
 import SavePlaceView from './SavePlaceView'
 import SearchView from './SearchView'
@@ -25,7 +25,7 @@ class App extends React.Component {
     super(props)
 
     this.state = {
-      isLoading: location.pathname === '/'
+      isLoading: true
     }
 
     this.handleLogin = this.handleLogin.bind(this)
@@ -38,7 +38,7 @@ class App extends React.Component {
     setTimeout(() => {
       if (this.isUnmounting) return
       this.setState({ isLoading: false })
-    }, 2000)
+    }, 5000)
 
     watchAuthState(this.handleAuthStateChange)
 
@@ -105,7 +105,9 @@ class App extends React.Component {
 
   renderLoading() {
     return (
-      <h1>loading</h1>
+      <main id='loading-view' className='view'>
+        <h1>loading</h1>
+      </main>
     )
   }
 

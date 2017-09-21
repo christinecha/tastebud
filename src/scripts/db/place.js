@@ -1,5 +1,6 @@
 import { ref } from '../constants/firebase'
 import createPlaceObject from '../lib/createPlaceObject'
+import { getFollowerInfo } from '../lib/getFollowerInfo'
 import { getUser } from './user'
 
 export const isDupePlace = (locationData) => {
@@ -53,6 +54,20 @@ export const addUserToPlace = (placeId, userId) => {
   })
 }
 
+export const removeUserFromPlace = (placeId, userId) => {
+  getPlace(placeId).then(snapshot => {
+    const place = snapshot.val()
+    const users = place.users || []
+
+    if (users.length < 1) return
+
+    const index = users.indexOf(userId)
+    users.splice(userId, 1)
+
+    updatePlace(placeId, { users })
+  })
+}
+
 export const getPlaceIdsFromUsers = (users) => {
   return Promise.all(users.map(userId => {
     return new Promise((resolve, reject) => {
@@ -74,4 +89,22 @@ export const getPlaces = (places) => {
       })
     })
   }))
+}
+
+export const getPlacesWithFollowerInfo = (places, currentUser) => {
+  return new Promise((resolve, reject) => {
+    getPlaces(places)
+    .then(places => {
+      const promises = places.map(place => getFollowerInfo(place, currentUser))
+
+      Promise.all(promises)
+      .then(messages => {
+        messages.forEach((message, i) => {
+          if (places[i]) places[i].followerInfo = message
+        })
+
+        resolve(places)
+      })
+    })
+  })
 }

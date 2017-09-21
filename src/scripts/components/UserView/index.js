@@ -1,9 +1,13 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+
 import { followUser, getUser, saveUser, watchUser } from '../../db/user'
-import { getPlace } from '../../db/place'
-import EditUser from './EditUser'
+import { getPlacesWithFollowerInfo } from '../../db/place'
 import { getFollowerInfo } from '../../lib/getFollowerInfo'
+
+import EditUser from './EditUser'
+import PlaceList from '../PlaceList'
+
 
 class UserView extends React.Component {
   constructor(props) {
@@ -20,6 +24,7 @@ class UserView extends React.Component {
 
   componentDidMount() {
     const userId = this.props.computedMatch.params.uid
+    this.firstLoad = true
 
     watchUser(userId, snapshot => {
       if (this.isUnmounting) return
@@ -50,27 +55,25 @@ class UserView extends React.Component {
     const stateObj = {}
     stateObj[key] = items
 
+
     this.setState(stateObj)
   }
 
   getUserPlaces() {
+    if (!this.firstLoad) return
+
     const { user } = this.state
+    const { currentUser } = this.props
 
     if (!user || !user.places) return
+    if (!currentUser) return
 
-    user.places.forEach((placeId, i) => {
-      getPlace(placeId).then(snapshot => {
-        if (this.isUnmounting) return
+    getPlacesWithFollowerInfo(user.places, currentUser)
+    .then(places => {
+      if (this.isUnmounting) return
+      this.setState({ places })
 
-        const place = snapshot.val()
-
-        if (!place) return
-
-        getFollowerInfo(place, user).then((msg) => {
-          place.followerInfoMsg = msg
-          this.updateStateArray('places', place, i)
-        })
-      })
+      this.firstLoad = false
     })
   }
 
@@ -79,23 +82,6 @@ class UserView extends React.Component {
     const { user } = this.state
 
     followUser(currentUser, user.uid)
-  }
-
-  renderPlaces() {
-    return this.state.places.map((place) => {
-      if (!place) return null
-
-      return (
-        <div className='place' key={place.id}>
-          <div className='icon'></div>
-          <h3 className='name'>{place.name}</h3>
-          <p className='locale label'>West Village</p>
-          <div className='follower-info'>
-            <p>{place.followerInfoMsg}</p>
-          </div>
-        </div>
-      )
-    })
   }
 
   renderStats() {
@@ -173,9 +159,7 @@ class UserView extends React.Component {
         {this.renderUserInfo()}
         {this.renderStats()}
 
-        <div className='places'>
-          {this.renderPlaces()}
-        </div>
+        <PlaceList places={this.state.places} {...this.props} />
       </main>
     )
   }
