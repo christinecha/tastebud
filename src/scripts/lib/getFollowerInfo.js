@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { getUser } from '../db/user'
 
 const renderLinkToUser = (user) => {
-  return <Link to={`/users/${user.uid}`}>{user.username}</Link>
+  return <Link to={`/users/${user.uid}`}>@{user.username}</Link>
 }
 
 export const getFollowerInfo = (place, currentUser) => {
@@ -37,9 +37,9 @@ export const getFollowerInfo = (place, currentUser) => {
       remaining -= 1
 
       if (followedUsers.length === 1) {
-        if (remaining === 0) return resolve(<span>{renderLinkToUser(user1)}</span>)
-        if (remaining === 1) return resolve(<span>{renderLinkToUser(user1)} and 1 other</span>)
-        return resolve(<span>{renderLinkToUser(user1)} and {remaining} others</span>)
+        if (remaining === 0) return resolve(<span>{renderLinkToUser(user1)} likes this</span>)
+        if (remaining === 1) return resolve(<span>{renderLinkToUser(user1)} and 1 other like this</span>)
+        return resolve(<span>{renderLinkToUser(user1)} and {remaining} others like this</span>)
       }
 
       getUser(followedUsers[1])
@@ -47,9 +47,9 @@ export const getFollowerInfo = (place, currentUser) => {
         const user2 = snapshot.val()
         remaining -= 1
 
-        if (remaining === 0) return resolve(<span>{renderLinkToUser(user1)} and {renderLinkToUser(user2)}</span>)
-        if (remaining === 1) return resolve(<span>{renderLinkToUser(user1)}, {renderLinkToUser(user2)}, and 1 other</span>)
-        return resolve(<span>{renderLinkToUser(user1)}, {renderLinkToUser(user2)}, and {remaining} other</span>)
+        if (remaining === 0) return resolve(<span>{renderLinkToUser(user1)} and {renderLinkToUser(user2)} like this</span>)
+        if (remaining === 1) return resolve(<span>{renderLinkToUser(user1)}, {renderLinkToUser(user2)}, and 1 other like this</span>)
+        return resolve(<span>{renderLinkToUser(user1)}, {renderLinkToUser(user2)}, and {remaining} other like this</span>)
       })
     })
   })

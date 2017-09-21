@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-import { followUser, getUser, saveUser, watchUser } from '../../db/user'
+import { followUser, getUser, saveUser, unwatchUser, watchUser } from '../../db/user'
 import { getPlacesWithFollowerInfo } from '../../db/place'
 import { getFollowerInfo } from '../../lib/getFollowerInfo'
 
@@ -43,7 +43,9 @@ class UserView extends React.Component {
   }
 
   componentWillUnmount() {
+    const userId = this.props.computedMatch.params.uid
     this.isUnmounting = true
+    unwatchUser(userId)
   }
 
   updateStateArray(key, newItem, i) {

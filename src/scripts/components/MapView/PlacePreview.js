@@ -21,7 +21,7 @@ class PlacePreview extends React.Component {
           <h3>{activePlace.name}</h3>
           <p className='label'>{distance}</p>
           <hr />
-          <p className='label'>{activePlace.followerInfo}</p>
+          <p className='label'>{activePlace.followerInfo || 'You like this'}</p>
         </div>
       </div>
     )
