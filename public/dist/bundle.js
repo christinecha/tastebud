@@ -16218,14 +16218,18 @@ var UserList = function (_React$Component) {
   }
 
   _createClass(UserList, [{
+    key: 'componentWillMount',
+    value: function componentWillMount() {
+      if (this.props.users[0] && _typeof(this.props.users[0]) === 'object') {
+        this.setState({ users: this.props.users });
+      }
+    }
+  }, {
     key: 'componentWillReceiveProps',
     value: function componentWillReceiveProps(props) {
       var _this2 = this;
 
-      if (props.users[0] && _typeof(props.users[0]) === 'object') {
-        this.setState({ users: props.users });
-        return;
-      }
+      if (this.state.users) return;
 
       this.getUsers(props.users).then(function (userSnapshots) {
         if (_this2.isUnmounting) return;
@@ -30818,7 +30822,9 @@ var _UserList = __webpack_require__(127);
 
 var _UserList2 = _interopRequireDefault(_UserList);
 
-var _static = __webpack_require__(256);
+var _Instructions = __webpack_require__(506);
+
+var _Instructions2 = _interopRequireDefault(_Instructions);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -30845,10 +30851,12 @@ var SearchView = function (_React$Component) {
 
     _this.handleChange = _this.handleChange.bind(_this);
     _this.handleClickSearchOption = _this.handleClickSearchOption.bind(_this);
+    _this.getSearchResults = _this.getSearchResults.bind(_this);
 
     _this.state = {
       searchQuery: '',
-      results: [],
+      places: [],
+      people: [],
       searchType: SEARCH_TYPES.places
     };
     return _this;
@@ -30870,6 +30878,11 @@ var SearchView = function (_React$Component) {
     value: function getSearchResults() {
       var _this2 = this;
 
+      if (this.hasEmptyQuery()) {
+        this.setState({ places: [], people: [] });
+        return;
+      }
+
       var now = performance.now();
 
       if (now - this.lastSearch < 300) {
@@ -30882,7 +30895,7 @@ var SearchView = function (_React$Component) {
       }
 
       this.lastSearch = now;
-      console.log('search');
+
       if (this.state.searchType === SEARCH_TYPES.places) {
         this.searchPlaces();
       }
@@ -30908,7 +30921,7 @@ var SearchView = function (_React$Component) {
         if (status !== google.maps.places.PlacesServiceStatus.OK) return;
 
         var firstTenPlaces = places.length > 10 ? places.slice(0, 10) : places;
-        _this3.setState({ results: firstTenPlaces });
+        _this3.setState({ places: firstTenPlaces });
       });
     }
   }, {
@@ -30917,32 +30930,26 @@ var SearchView = function (_React$Component) {
       var _this4 = this;
 
       (0, _user.findUsersByUsername)(this.state.searchQuery).then(function (snapshot) {
-        var results = [];
+        var people = [];
 
         snapshot.forEach(function (childSnapshot, i) {
           var user = childSnapshot.val();
-          results.push(user);
+          people.push(user);
         });
 
-        _this4.setState({ results: results });
+        _this4.setState({ people: people });
       });
     }
   }, {
     key: 'hasEmptyQuery',
     value: function hasEmptyQuery() {
-      return !this.$input.value || this.$input.value.trim() === '';
+      return !this.state.searchQuery || this.state.searchQuery.trim() === '';
     }
   }, {
     key: 'handleChange',
     value: function handleChange(e) {
-      this.setState({ searchQuery: e.target.value });
-
-      if (this.hasEmptyQuery()) {
-        this.setState({ results: [] });
-        return;
-      }
-
-      this.getSearchResults();
+      console.log(e.target.value);
+      this.setState({ searchQuery: e.target.value }, this.getSearchResults);
     }
   }, {
     key: 'handleClickSearchOption',
@@ -30953,7 +30960,6 @@ var SearchView = function (_React$Component) {
       clearTimeout(this.searchTimeout);
 
       this.setState({
-        searchQuery: this.$input.value,
         searchType: type
       }, function () {
         if (_this5.hasEmptyQuery()) return;
@@ -30961,18 +30967,24 @@ var SearchView = function (_React$Component) {
       });
     }
   }, {
+    key: 'getResults',
+    value: function getResults() {
+      if (this.state.searchType === SEARCH_TYPES.places) return this.state.places;
+      return this.state.people;
+    }
+  }, {
     key: 'renderResults',
     value: function renderResults() {
-      if (this.state.results.length < 1) {
-        return _react2.default.createElement(_static.Instructions, null);
+      if (this.getResults().length < 1) {
+        return _react2.default.createElement(_Instructions2.default, { searchType: this.state.searchType });
       }
 
       if (this.state.searchType === SEARCH_TYPES.places) {
-        return _react2.default.createElement(_PlaceList2.default, _extends({ places: this.state.results }, this.props));
+        return _react2.default.createElement(_PlaceList2.default, _extends({ places: this.state.places }, this.props));
       }
 
       if (this.state.searchType === SEARCH_TYPES.people) {
-        return _react2.default.createElement(_UserList2.default, { users: this.state.results || [] });
+        return _react2.default.createElement(_UserList2.default, { users: this.state.people || [] });
       }
     }
   }, {
@@ -31008,7 +31020,7 @@ var SearchView = function (_React$Component) {
     value: function render() {
       var _this7 = this;
 
-      var hasResults = this.state.results.length > 0 ? 'has-results' : '';
+      var hasResults = this.getResults().length > 0 ? 'has-results' : '';
 
       return _react2.default.createElement(
         'main',
@@ -31042,38 +31054,7 @@ var SearchView = function (_React$Component) {
 exports.default = SearchView;
 
 /***/ }),
-/* 256 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Instructions = undefined;
-
-var _react = __webpack_require__(3);
-
-var _react2 = _interopRequireDefault(_react);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var Instructions = exports.Instructions = function Instructions() {
-  return _react2.default.createElement(
-    'div',
-    { className: 'instructions' },
-    _react2.default.createElement(
-      'p',
-      null,
-      'To add a place, just search ',
-      _react2.default.createElement('br', null),
-      ' for it by name.'
-    )
-  );
-};
-
-/***/ }),
+/* 256 */,
 /* 257 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -81217,6 +81198,76 @@ var setStaticHeight = exports.setStaticHeight = function setStaticHeight($el) {
 }.call(this));
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(218)(module), __webpack_require__(39)))
+
+/***/ }),
+/* 506 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(3);
+
+var _react2 = _interopRequireDefault(_react);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Instructions = function (_React$Component) {
+  _inherits(Instructions, _React$Component);
+
+  function Instructions() {
+    _classCallCheck(this, Instructions);
+
+    return _possibleConstructorReturn(this, (Instructions.__proto__ || Object.getPrototypeOf(Instructions)).apply(this, arguments));
+  }
+
+  _createClass(Instructions, [{
+    key: 'render',
+    value: function render() {
+      var vocab = {
+        0: { noun: 'a place', pronoun: 'it' },
+        1: { noun: 'a friend', pronoun: 'them' }
+      };
+
+      var _vocab$props$searchTy = vocab[this.props.searchType],
+          noun = _vocab$props$searchTy.noun,
+          pronoun = _vocab$props$searchTy.pronoun;
+
+
+      return _react2.default.createElement(
+        'div',
+        { className: 'instructions' },
+        _react2.default.createElement(
+          'p',
+          null,
+          'To add ',
+          noun,
+          ', just search ',
+          _react2.default.createElement('br', null),
+          ' for ',
+          pronoun,
+          ' by name.'
+        )
+      );
+    }
+  }]);
+
+  return Instructions;
+}(_react2.default.Component);
+
+exports.default = Instructions;
 
 /***/ })
 /******/ ]);

@@ -11,11 +11,14 @@ class UserList extends React.Component {
     }
   }
 
-  componentWillReceiveProps(props) {
-    if (props.users[0] && typeof props.users[0] === 'object') {
-      this.setState({ users: props.users })
-      return
+  componentWillMount() {
+    if (this.props.users[0] && typeof this.props.users[0] === 'object') {
+      this.setState({ users: this.props.users })
     }
+  }
+
+  componentWillReceiveProps(props) {
+    if (this.state.users) return
 
     this.getUsers(props.users).then(userSnapshots => {
       if (this.isUnmounting) return

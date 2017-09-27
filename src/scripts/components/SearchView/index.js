@@ -9,7 +9,7 @@ import {
 import { getPlace } from '../../db/place'
 import PlaceList from '../PlaceList'
 import UserList from '../UserList'
-import { Instructions } from './static'
+import Instructions from './Instructions'
 
 const SEARCH_TYPES = {
   places: 0,
@@ -25,10 +25,12 @@ class SearchView extends React.Component {
 
     this.handleChange = this.handleChange.bind(this)
     this.handleClickSearchOption = this.handleClickSearchOption.bind(this)
+    this.getSearchResults = this.getSearchResults.bind(this)
 
     this.state = {
       searchQuery: '',
-      results: [],
+      places: [],
+      people: [],
       searchType: SEARCH_TYPES.places
     }
   }
@@ -43,6 +45,11 @@ class SearchView extends React.Component {
   }
 
   getSearchResults() {
+    if (this.hasEmptyQuery()) {
+      this.setState({ places: [], people: [] })
+      return
+    }
+
     const now = performance.now()
 
     if (now - this.lastSearch < 300) {
@@ -55,7 +62,7 @@ class SearchView extends React.Component {
     }
 
     this.lastSearch = now
-console.log('search')
+
     if (this.state.searchType === SEARCH_TYPES.places) {
       this.searchPlaces()
     }
@@ -78,36 +85,33 @@ console.log('search')
       if (status !== google.maps.places.PlacesServiceStatus.OK) return
 
       const firstTenPlaces = places.length > 10 ? places.slice(0, 10) : places
-      this.setState({ results: firstTenPlaces })
+      this.setState({ places: firstTenPlaces })
     })
   }
 
   searchPeople() {
     findUsersByUsername(this.state.searchQuery).then(snapshot => {
-      let results = []
+      let people = []
 
       snapshot.forEach((childSnapshot, i) => {
         const user = childSnapshot.val()
-        results.push(user)
+        people.push(user)
       })
 
-      this.setState({ results })
+      this.setState({ people })
     })
   }
 
   hasEmptyQuery() {
-    return !this.$input.value || this.$input.value.trim() === ''
+    return !this.state.searchQuery || this.state.searchQuery.trim() === ''
   }
 
   handleChange(e) {
-    this.setState({ searchQuery: e.target.value })
-
-    if (this.hasEmptyQuery()) {
-      this.setState({ results: [] })
-      return
-    }
-
-    this.getSearchResults()
+    console.log(e.target.value)
+    this.setState(
+      { searchQuery: e.target.value },
+      this.getSearchResults
+    )
   }
 
   handleClickSearchOption(e) {
@@ -115,25 +119,29 @@ console.log('search')
     clearTimeout(this.searchTimeout)
 
     this.setState({
-      searchQuery: this.$input.value,
-      searchType: type,
+      searchType: type
     }, () => {
       if (this.hasEmptyQuery()) return
       this.getSearchResults()
     })
   }
 
+  getResults() {
+    if (this.state.searchType === SEARCH_TYPES.places) return this.state.places
+    return this.state.people
+  }
+
   renderResults() {
-    if (this.state.results.length < 1) {
-      return <Instructions />
+    if (this.getResults().length < 1) {
+      return <Instructions searchType={this.state.searchType} />
     }
 
     if (this.state.searchType === SEARCH_TYPES.places) {
-      return <PlaceList places={this.state.results} {...this.props} />
+      return <PlaceList places={this.state.places} {...this.props} />
     }
 
     if (this.state.searchType === SEARCH_TYPES.people) {
-      return <UserList users={this.state.results || []} />
+      return <UserList users={this.state.people || []} />
     }
   }
 
@@ -162,7 +170,7 @@ console.log('search')
   }
 
   render() {
-    const hasResults = this.state.results.length > 0 ? 'has-results': ''
+    const hasResults = this.getResults().length > 0 ? 'has-results': ''
 
     return (
       <main id='search-view' className='view'>
