@@ -29409,7 +29409,7 @@ var App = function (_React$Component) {
   }, {
     key: 'handleResize',
     value: function handleResize() {
-      this.setState({ contentHeight: (0, _staticHeight.getFullScreenHeight)() + 'px' });
+      // this.setState({ contentHeight: getFullScreenHeight() + 'px' })
     }
   }, {
     key: 'handleLogin',

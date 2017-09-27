@@ -66,7 +66,7 @@ class App extends React.Component {
   }
 
   handleResize() {
-    this.setState({ contentHeight: getFullScreenHeight() + 'px' })
+    // this.setState({ contentHeight: getFullScreenHeight() + 'px' })
   }
 
   handleLogin(user) {
