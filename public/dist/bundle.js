@@ -16229,7 +16229,7 @@ var UserList = function (_React$Component) {
     value: function componentWillReceiveProps(props) {
       var _this2 = this;
 
-      if (this.state.users) return;
+      if (this.state.users.length > 0) return;
 
       this.getUsers(props.users).then(function (userSnapshots) {
         if (_this2.isUnmounting) return;
