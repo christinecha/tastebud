@@ -24,13 +24,11 @@ class SearchView extends React.Component {
     super(props)
 
     this.handleChange = this.handleChange.bind(this)
-    this.handleInputFocus = this.handleInputFocus.bind(this)
     this.handleClickSearchOption = this.handleClickSearchOption.bind(this)
 
     this.state = {
       searchQuery: '',
       results: [],
-      showSearchOptions: false,
       searchType: SEARCH_TYPES.places
     }
   }
@@ -97,14 +95,18 @@ console.log('search')
     })
   }
 
-  handleInputFocus() {
-    this.setState({
-      showSearchOptions: true
-    })
+  hasEmptyQuery() {
+    return !this.$input.value || this.$input.value.trim() === ''
   }
 
   handleChange(e) {
     this.setState({ searchQuery: e.target.value })
+
+    if (this.hasEmptyQuery()) {
+      this.setState({ results: [] })
+      return
+    }
+
     this.getSearchResults()
   }
 
@@ -116,6 +118,7 @@ console.log('search')
       searchQuery: this.$input.value,
       searchType: type,
     }, () => {
+      if (this.hasEmptyQuery()) return
       this.getSearchResults()
     })
   }
@@ -165,14 +168,13 @@ console.log('search')
       <main id='search-view' className='view'>
         <input
           ref={$input => this.$input = $input}
-          onFocus={this.handleInputFocus}
           type='text'
           className='search-input'
           placeholder='Search for Places'
           onChange={this.handleChange}
           value={this.state.searchQuery}
         />
-        {this.state.showSearchOptions && this.renderSearchOptions()}
+        {this.renderSearchOptions()}
         <div ref={$results => this.$results = $results}></div>
         <div className={'search-results ' + hasResults}>
           {this.renderResults()}

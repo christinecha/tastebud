@@ -30844,13 +30844,11 @@ var SearchView = function (_React$Component) {
     var _this = _possibleConstructorReturn(this, (SearchView.__proto__ || Object.getPrototypeOf(SearchView)).call(this, props));
 
     _this.handleChange = _this.handleChange.bind(_this);
-    _this.handleInputFocus = _this.handleInputFocus.bind(_this);
     _this.handleClickSearchOption = _this.handleClickSearchOption.bind(_this);
 
     _this.state = {
       searchQuery: '',
       results: [],
-      showSearchOptions: false,
       searchType: SEARCH_TYPES.places
     };
     return _this;
@@ -30930,16 +30928,20 @@ var SearchView = function (_React$Component) {
       });
     }
   }, {
-    key: 'handleInputFocus',
-    value: function handleInputFocus() {
-      this.setState({
-        showSearchOptions: true
-      });
+    key: 'hasEmptyQuery',
+    value: function hasEmptyQuery() {
+      return !this.$input.value || this.$input.value.trim() === '';
     }
   }, {
     key: 'handleChange',
     value: function handleChange(e) {
       this.setState({ searchQuery: e.target.value });
+
+      if (this.hasEmptyQuery()) {
+        this.setState({ results: [] });
+        return;
+      }
+
       this.getSearchResults();
     }
   }, {
@@ -30954,6 +30956,7 @@ var SearchView = function (_React$Component) {
         searchQuery: this.$input.value,
         searchType: type
       }, function () {
+        if (_this5.hasEmptyQuery()) return;
         _this5.getSearchResults();
       });
     }
@@ -31014,14 +31017,13 @@ var SearchView = function (_React$Component) {
           ref: function ref($input) {
             return _this7.$input = $input;
           },
-          onFocus: this.handleInputFocus,
           type: 'text',
           className: 'search-input',
           placeholder: 'Search for Places',
           onChange: this.handleChange,
           value: this.state.searchQuery
         }),
-        this.state.showSearchOptions && this.renderSearchOptions(),
+        this.renderSearchOptions(),
         _react2.default.createElement('div', { ref: function ref($results) {
             return _this7.$results = $results;
           } }),
