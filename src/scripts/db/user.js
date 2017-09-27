@@ -7,6 +7,14 @@ export const saveUser = (_userData) => {
   return ref.child(`users/${userData.uid}`).set(userData, (n) => console.log('done', userData))
 }
 
+export const findUsersByUsername = (query) => {
+  query = query.toUpperCase()
+  return ref.child('users')
+  .orderByChild('username')
+  .startAt(query)
+  .once('value')
+}
+
 export const getUser = (id) => {
   return ref.child(`users/${id}`).once('value')
 }

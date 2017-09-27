@@ -1,6 +1,6 @@
 import React from 'react'
 import { signUpWithEmail, login, resetPassword } from '../../db/auth'
-import { saveUser } from '../../db/user'
+import { getUser, saveUser } from '../../db/user'
 import userSchema from '../../schema/userSchema'
 import generateFormGroup from '../generate/FormGroup'
 import * as constants from './constants'

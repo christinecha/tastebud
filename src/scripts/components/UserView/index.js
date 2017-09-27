@@ -13,6 +13,7 @@ class UserView extends React.Component {
   constructor(props) {
     super(props)
 
+    this.handleWatchUser = this.handleWatchUser.bind(this)
     this.getUserPlaces = this.getUserPlaces.bind(this)
 
     this.state = {
@@ -26,26 +27,28 @@ class UserView extends React.Component {
     const userId = this.props.computedMatch.params.uid
     this.firstLoad = true
 
-    watchUser(userId, snapshot => {
-      if (this.isUnmounting) return
+    watchUser(userId, this.handleWatchUser)
+  }
 
-      const user = snapshot.val()
-      this.setState({ user }, this.getUserPlaces)
+  handleWatchUser(snapshot) {
+    if (this.isUnmounting) return
 
-      const { currentUser } = this.props
-      if (currentUser && user.uid === currentUser.uid) {
-        if (currentUser.firstLogin) {
-          currentUser.firstLogin = false
-          saveUser(currentUser)
-        }
+    const user = snapshot.val()
+    this.setState({ user }, this.getUserPlaces)
+
+    const { currentUser } = this.props
+    if (currentUser && user.uid === currentUser.uid) {
+      if (currentUser.firstLogin) {
+        currentUser.firstLogin = false
+        saveUser(currentUser)
       }
-    })
+    }
   }
 
   componentWillUnmount() {
     const userId = this.props.computedMatch.params.uid
     this.isUnmounting = true
-    unwatchUser(userId)
+    unwatchUser(userId, this.handleWatchUser)
   }
 
   updateStateArray(key, newItem, i) {

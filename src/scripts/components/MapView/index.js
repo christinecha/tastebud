@@ -36,8 +36,7 @@ class MapView extends React.Component {
   renderMap() {
     const { currentUser } = this.props
     if (!currentUser) return
-
-    const usersToShow = [currentUser.uid].concat(currentUser.following)
+    const usersToShow = [currentUser.uid].concat(currentUser.following || [])
 
     getPlaceIdsFromUsers(usersToShow)
     .then(_placeIds => {

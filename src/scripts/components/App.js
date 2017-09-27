@@ -16,8 +16,9 @@ import UserView from './UserView/index'
 import FollowersView from './FollowersView'
 import FollowingView from './FollowingView'
 
+import { getFullScreenHeight } from '../lib/static-height'
 import { getCurrentUser, watchAuthState } from '../db/auth'
-import { getUser, saveUser, createUserFromFacebookRedirect } from '../db/user'
+import { getUser, saveUser, watchUser, createUserFromFacebookRedirect } from '../db/user'
 
 
 class App extends React.Component {
@@ -25,14 +26,18 @@ class App extends React.Component {
     super(props)
 
     this.state = {
-      isLoading: true
+      isLoading: true,
+      contentHeight: getFullScreenHeight() + 'px'
     }
 
+    this.handleResize = this.handleResize.bind(this)
     this.handleLogin = this.handleLogin.bind(this)
     this.handleAuthStateChange = this.handleAuthStateChange.bind(this)
   }
 
   componentWillMount() {
+    window.addEventListener('resize', this.handleResize)
+
     this.props.history.listen(location => this.handleHistoryListen(location))
 
     setTimeout(() => {
@@ -57,17 +62,23 @@ class App extends React.Component {
 
   componentWillUnmount() {
     this.isUnmounting = true
+    window.removeEventListener('resize', this.handleResize)
+  }
+
+  handleResize() {
+    this.setState({ contentHeight: getFullScreenHeight() + 'px' })
   }
 
   handleLogin(user) {
-    this.props.updateCurrentUser(user)
+    this.setState({ isLoading: false })
+
+    if (user.firstLogin) {
+      this.props.history.push(`/users/${user.uid}`)
+      return
+    }
 
     if (this.props.history.location.pathname !== '/') return
-
-    if (user.firstLogin) this.props.history.push(`/users/${user.uid}`)
     else this.props.history.push('/map')
-
-    this.setState({ isLoading: false })
   }
 
   handleAuthStateChange(data) {
@@ -77,8 +88,10 @@ class App extends React.Component {
       return
     }
 
-    getUser(data.uid).then(snapshot => {
+    watchUser(data.uid, snapshot => {
       const user = snapshot.val()
+
+      this.props.updateCurrentUser(user)
 
       if (user) return this.handleLogin(user)
 
@@ -112,10 +125,18 @@ class App extends React.Component {
   }
 
   render() {
-    if (this.state.isLoading) return this.renderLoading()
+    const contentWrapperStyle = {
+      height: this.state.contentHeight
+    }
+
+    if (this.state.isLoading) return (
+      <div className='content-wrapper' style={contentWrapperStyle}>
+        {this.renderLoading()}
+      </div>
+    )
 
     return (
-      <div className='content-wrapper'>
+      <div className='content-wrapper' style={contentWrapperStyle}>
         <Header {...this.props} />
         <Switch>
           <Route exact path='/' component={HomeView} />

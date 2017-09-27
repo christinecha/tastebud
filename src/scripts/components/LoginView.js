@@ -34,7 +34,6 @@ class LoginView extends React.Component {
   }
 
   setErrorMsg(msg) {
-    console.log(msg)
     this.setState({
       errorMsg: msg
     })

@@ -12,6 +12,11 @@ class UserList extends React.Component {
   }
 
   componentWillReceiveProps(props) {
+    if (props.users[0] && typeof props.users[0] === 'object') {
+      this.setState({ users: props.users })
+      return
+    }
+
     this.getUsers(props.users).then(userSnapshots => {
       if (this.isUnmounting) return
       this.setState({

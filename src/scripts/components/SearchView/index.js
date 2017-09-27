@@ -1,19 +1,37 @@
 import React from 'react'
 
-import { followUser, getUser, saveUser } from '../../db/user'
+import {
+  findUsersByUsername,
+  followUser,
+  getUser,
+  saveUser
+} from '../../db/user'
 import { getPlace } from '../../db/place'
 import PlaceList from '../PlaceList'
+import UserList from '../UserList'
 import { Instructions } from './static'
+
+const SEARCH_TYPES = {
+  places: 0,
+  people: 1
+}
+
+const SEARCH_TYPE_NAMES = Object.keys(SEARCH_TYPES)
+
 
 class SearchView extends React.Component {
   constructor(props) {
     super(props)
 
     this.handleChange = this.handleChange.bind(this)
+    this.handleInputFocus = this.handleInputFocus.bind(this)
+    this.handleClickSearchOption = this.handleClickSearchOption.bind(this)
 
     this.state = {
       searchQuery: '',
-      results: []
+      results: [],
+      showSearchOptions: false,
+      searchType: SEARCH_TYPES.places
     }
   }
 
@@ -30,21 +48,32 @@ class SearchView extends React.Component {
     const now = performance.now()
 
     if (now - this.lastSearch < 300) {
-      setTimeout(() => {
+      clearTimeout(this.searchTimeout)
+      this.searchTimeout = setTimeout(() => {
         this.getSearchResults()
       }, 300)
 
       return
     }
 
+    this.lastSearch = now
+console.log('search')
+    if (this.state.searchType === SEARCH_TYPES.places) {
+      this.searchPlaces()
+    }
+
+    if (this.state.searchType === SEARCH_TYPES.people) {
+      this.searchPeople()
+    }
+  }
+
+  searchPlaces() {
     const request = {
       keyword: this.state.searchQuery,
       location: this.props.currentLocation,
       rankBy: google.maps.places.RankBy.DISTANCE,
       type: [ 'restaurant' ]
     }
-
-    this.lastSearch = now
 
     this.service.nearbySearch(request, (places, status) => {
       if (this.isUnmounting) return
@@ -55,9 +84,40 @@ class SearchView extends React.Component {
     })
   }
 
+  searchPeople() {
+    findUsersByUsername(this.state.searchQuery).then(snapshot => {
+      let results = []
+
+      snapshot.forEach((childSnapshot, i) => {
+        const user = childSnapshot.val()
+        results.push(user)
+      })
+
+      this.setState({ results })
+    })
+  }
+
+  handleInputFocus() {
+    this.setState({
+      showSearchOptions: true
+    })
+  }
+
   handleChange(e) {
     this.setState({ searchQuery: e.target.value })
     this.getSearchResults()
+  }
+
+  handleClickSearchOption(e) {
+    const type = parseInt(e.target.dataset.type)
+    clearTimeout(this.searchTimeout)
+
+    this.setState({
+      searchQuery: this.$input.value,
+      searchType: type,
+    }, () => {
+      this.getSearchResults()
+    })
   }
 
   renderResults() {
@@ -65,11 +125,36 @@ class SearchView extends React.Component {
       return <Instructions />
     }
 
+    if (this.state.searchType === SEARCH_TYPES.places) {
+      return <PlaceList places={this.state.results} {...this.props} />
+    }
+
+    if (this.state.searchType === SEARCH_TYPES.people) {
+      return <UserList users={this.state.results || []} />
+    }
+  }
+
+  renderSearchOptions() {
+    const { searchType } = this.state
+
+    const options = SEARCH_TYPE_NAMES.map((name, i) => {
+      return (
+        <div
+          className='option label'
+          key={i}
+          data-active={SEARCH_TYPES[name] === searchType}
+          data-type={SEARCH_TYPES[name]}
+          onClick={this.handleClickSearchOption}
+        >
+          {name}
+        </div>
+      )
+    })
+
     return (
-      <PlaceList
-        places={this.state.results}
-        {...this.props}
-      />
+      <div className='search-options' >
+        {options}
+      </div>
     )
   }
 
@@ -80,12 +165,14 @@ class SearchView extends React.Component {
       <main id='search-view' className='view'>
         <input
           ref={$input => this.$input = $input}
+          onFocus={this.handleInputFocus}
           type='text'
           className='search-input'
           placeholder='Search for Places'
           onChange={this.handleChange}
           value={this.state.searchQuery}
         />
+        {this.state.showSearchOptions && this.renderSearchOptions()}
         <div ref={$results => this.$results = $results}></div>
         <div className={'search-results ' + hasResults}>
           {this.renderResults()}
