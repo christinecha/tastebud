@@ -31023,6 +31023,7 @@ var SearchView = function (_React$Component) {
       var _this7 = this;
 
       var hasResults = this.getResults().length > 0 ? 'has-results' : '';
+      var capitalized = ['Places', 'People'];
 
       return _react2.default.createElement(
         'main',
@@ -31033,7 +31034,7 @@ var SearchView = function (_React$Component) {
           },
           type: 'text',
           className: 'search-input',
-          placeholder: 'Search for Places',
+          placeholder: 'Search for ' + capitalized[this.state.searchType],
           onChange: this.handleChange,
           value: this.state.searchQuery
         }),

@@ -173,6 +173,9 @@ class SearchView extends React.Component {
 
   render() {
     const hasResults = this.getResults().length > 0 ? 'has-results': ''
+    const capitalized = [
+      'Places', 'People'
+    ]
 
     return (
       <main id='search-view' className='view'>
@@ -180,7 +183,7 @@ class SearchView extends React.Component {
           ref={$input => this.$input = $input}
           type='text'
           className='search-input'
-          placeholder='Search for Places'
+          placeholder={`Search for ${capitalized[this.state.searchType]}`}
           onChange={this.handleChange}
           value={this.state.searchQuery}
         />
