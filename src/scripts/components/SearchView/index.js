@@ -107,7 +107,6 @@ class SearchView extends React.Component {
   }
 
   handleChange(e) {
-    console.log(e.target.value)
     this.setState(
       { searchQuery: e.target.value },
       this.getSearchResults
@@ -117,6 +116,8 @@ class SearchView extends React.Component {
   handleClickSearchOption(e) {
     const type = parseInt(e.target.dataset.type)
     clearTimeout(this.searchTimeout)
+
+    this.$input.focus()
 
     this.setState({
       searchType: type

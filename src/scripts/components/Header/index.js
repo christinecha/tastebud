@@ -26,7 +26,7 @@ class Header extends React.Component {
         {/* <Link to='/login'>Login</Link> */}
         {/* {!currentUser && <Link to='/signup'>Signup</Link>} */}
         <NavItem><Link to='/map' className='label'>Places</Link></NavItem>
-        <NavItem><Link to='/search' className='label'>Add</Link></NavItem>
+        <NavItem><Link to='/search' className='label'>Search</Link></NavItem>
         <NavItem><Link to={`/users/${currentUser.uid}`} className='label'>Profile</Link></NavItem>
         <NavItem><div onClick={this.handleClick} className='label'>Sign Out</div></NavItem>
       </nav>
