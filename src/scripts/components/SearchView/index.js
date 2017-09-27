@@ -46,6 +46,7 @@ class SearchView extends React.Component {
 
   getSearchResults() {
     if (this.hasEmptyQuery()) {
+      clearTimeout(this.searchTimeout)
       this.setState({ places: [], people: [] })
       return
     }

@@ -30879,6 +30879,7 @@ var SearchView = function (_React$Component) {
       var _this2 = this;
 
       if (this.hasEmptyQuery()) {
+        clearTimeout(this.searchTimeout);
         this.setState({ places: [], people: [] });
         return;
       }
