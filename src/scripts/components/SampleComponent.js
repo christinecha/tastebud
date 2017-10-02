@@ -1,11 +1,11 @@
 import React from 'react'
 
 class SampleComponent extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
   }
 
-  render() {
+  render () {
     return (
       <div id="sample-component">
         This is my sample component.

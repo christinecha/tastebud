@@ -3,23 +3,23 @@ import { Link } from 'react-router-dom'
 import { signInWithFacebook, getUserFromFacebook } from '../db/auth'
 
 class HomeView extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
 
-    this.signInWithFacebook = this.signInWithFacebook.bind(this)
+    this.signInWithFacebook = this.signInWithFacebook.bind( this )
 
     this.getUserFromFacebook()
   }
 
-  getUserFromFacebook() {
+  getUserFromFacebook () {
     getUserFromFacebook()
   }
 
-  signInWithFacebook() {
+  signInWithFacebook () {
     signInWithFacebook()
   }
 
-  render() {
+  render () {
     return (
       <main id='home-view' className='view'>
         <h1>Tastemark</h1>

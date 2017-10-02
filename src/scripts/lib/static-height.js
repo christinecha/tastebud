@@ -7,7 +7,6 @@ const IS_MOBILE_OS = require( './is-mobile-os' )
  **/
 
 export const getFullScreenHeight = () => {
-
   // If it's not mobile, just return the innerHeight value.
   if ( !IS_MOBILE_OS ) return window.innerHeight
 
@@ -25,7 +24,6 @@ export const getFullScreenHeight = () => {
   * @param [isFullScreen] | Boolean - If true, use the calculated screen height. If false, use computed.
  **/
 export const setStaticHeight = ( $el, isFullScreen = false ) => {
-
   // If it's not a mobile OS, then undo any previous static height.
   if ( !IS_MOBILE_OS ) return $el.style.removeProperty( 'height' )
 

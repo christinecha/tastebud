@@ -1,6 +1,6 @@
 import locationSchema from '../schema/locationSchema'
 
-const createPlaceObject = (locationData) => {
+const createPlaceObject = ( locationData ) => {
   return Object.assign(
     {},
     locationSchema,

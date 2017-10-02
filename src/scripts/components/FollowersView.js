@@ -3,29 +3,29 @@ import UserList from './UserList'
 import { getUser } from '../db/user'
 
 class FollowersView extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
 
     this.state = {
-      user: {}
+      user: {},
     }
   }
 
-  componentDidMount() {
+  componentDidMount () {
     const userId = this.props.computedMatch.params.uid
 
-    getUser(userId).then(snapshot => {
-      if (this.isUnmounting) return
+    getUser( userId ).then(( snapshot ) => {
+      if ( this.isUnmounting ) return
       const user = snapshot.val()
       this.setState({ user })
     })
   }
 
-  componentWillUnmount() {
+  componentWillUnmount () {
     this.isUnmounting = true
   }
 
-  render() {
+  render () {
     return (
       <main id='followers-view' className='view'>
         <UserList users={this.state.user.followers || []} />

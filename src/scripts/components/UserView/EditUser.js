@@ -3,27 +3,27 @@ import userSchema from '../../schema/userSchema'
 import { saveUser } from '../../db/user'
 
 class EditUser extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
 
-    this.handleInputChange = this.handleInputChange.bind(this)
+    this.handleInputChange = this.handleInputChange.bind( this )
 
-    this.state = Object.assign({}, userSchema, this.props.currentUser)
+    this.state = Object.assign({}, userSchema, this.props.currentUser )
   }
 
-  handleInputChange(e) {
+  handleInputChange ( e ) {
     const newState = {}
-    newState[e.target.name] = e.target.value
-    this.setState(newState)
+    newState[ e.target.name ] = e.target.value
+    this.setState( newState )
   }
 
-  handleSubmit() {
-    this.props.updateCurrentUser(this.state)
-    saveUser(this.state).then(() => {
+  handleSubmit () {
+    this.props.updateCurrentUser( this.state )
+    saveUser( this.state ).then(() => {
     })
   }
 
-  render() {
+  render () {
     const { fullName, username } = this.state
     return (
       <div>

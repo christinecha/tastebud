@@ -2,36 +2,36 @@ export const INPUT_TYPES = {
   'fullName': 'text',
   'email': 'email',
   'username': 'text',
-  'password': 'password'
+  'password': 'password',
 }
 
 export const PLACEHOLDERS = {
   'fullName': 'Enter your full name',
   'email': 'Enter your email',
   'username': 'Choose a username',
-  'password': 'Create your password'
+  'password': 'Create your password',
 }
 
 export const LABELS = {
   'fullName': 'Full Name',
   'email': 'Email',
   'username': 'Username',
-  'password': 'Password'
+  'password': 'Password',
 }
 
 export const VALIDATION_ERRORS = {
   'fullName': {
-    'general': 'Please enter your full name.'
+    'general': 'Please enter your full name.',
   },
   'email': {
-    'general': 'Please enter a valid email address.'
+    'general': 'Please enter a valid email address.',
   },
   'username': {
     'empty': 'Please enter a username.',
-    'unavailable': 'This username is unavailable.'
+    'unavailable': 'This username is unavailable.',
   },
   'password': {
-    'general': 'Please enter a valid password.'
+    'general': 'Please enter a valid password.',
   },
 }
 
@@ -39,5 +39,5 @@ export const STEPS = {
   0: 'fullName',
   1: 'email',
   2: 'username',
-  3: 'password'
+  3: 'password',
 }

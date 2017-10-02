@@ -7,8 +7,8 @@ import PropsRoute from './PropsRoute'
 import Header from './Header/index'
 import HomeView from './HomeView'
 import SampleComponent from './SampleComponent'
-import MapView from './MapView/index'
-import LoginView from './LoginView'
+import MapViewContainer from './containers/MapViewContainer'
+import LoginViewContainer from './containers/LoginViewContainer'
 import SavePlaceView from './SavePlaceView'
 import SearchView from './SearchView'
 import SignupView from './SignupView/index'
@@ -20,103 +20,102 @@ import { getFullScreenHeight } from '../lib/static-height'
 import { getCurrentUser, watchAuthState } from '../db/auth'
 import { getUser, saveUser, watchUser, createUserFromFacebookRedirect } from '../db/user'
 
-
 class App extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
 
     this.state = {
       isLoading: true,
-      contentHeight: getFullScreenHeight() + 'px'
+      contentHeight: getFullScreenHeight() + 'px',
     }
 
-    this.handleResize = this.handleResize.bind(this)
-    this.handleLogin = this.handleLogin.bind(this)
-    this.handleAuthStateChange = this.handleAuthStateChange.bind(this)
+    this.handleResize = this.handleResize.bind( this )
+    this.handleLogin = this.handleLogin.bind( this )
+    this.handleAuthStateChange = this.handleAuthStateChange.bind( this )
   }
 
-  componentWillMount() {
-    window.addEventListener('resize', this.handleResize)
+  componentWillMount () {
+    window.addEventListener( 'resize', this.handleResize )
 
-    this.props.history.listen(location => this.handleHistoryListen(location))
+    this.props.history.listen(( location ) => this.handleHistoryListen( location ))
 
     setTimeout(() => {
-      if (this.isUnmounting) return
+      if ( this.isUnmounting ) return
       this.setState({ isLoading: false })
-    }, 5000)
+    }, 5000 )
 
-    watchAuthState(this.handleAuthStateChange)
+    watchAuthState( this.handleAuthStateChange )
 
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(position => {
+    if ( 'geolocation' in navigator ) {
+      navigator.geolocation.getCurrentPosition(( position ) => {
         const { latitude, longitude } = position.coords
         const currentLocation = {
           lat: latitude,
-          lng: longitude
+          lng: longitude,
         }
 
-        this.props.updateCurrentLocation(currentLocation)
+        this.props.updateCurrentLocation( currentLocation )
       })
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount () {
     this.isUnmounting = true
-    window.removeEventListener('resize', this.handleResize)
+    window.removeEventListener( 'resize', this.handleResize )
   }
 
-  handleResize() {
+  handleResize () {
     // this.setState({ contentHeight: getFullScreenHeight() + 'px' })
   }
 
-  handleLogin(user) {
+  handleLogin ( user ) {
     this.setState({ isLoading: false })
 
-    if (user.firstLogin) {
-      this.props.history.push(`/users/${user.uid}`)
+    if ( user.firstLogin ) {
+      this.props.history.push( `/users/${ user.uid }` )
       return
     }
 
-    if (this.props.history.location.pathname !== '/') return
-    else this.props.history.push('/map')
+    if ( this.props.history.location.pathname !== '/' ) return
+    else this.props.history.push( '/map' )
   }
 
-  handleAuthStateChange(data) {
-    if (!data || !data.uid) {
-      this.props.updateCurrentUser(null)
+  handleAuthStateChange ( data ) {
+    if ( !data || !data.uid ) {
+      this.props.updateCurrentUser( null )
       this.setState({ isLoading: false })
       return
     }
 
-    watchUser(data.uid, snapshot => {
+    watchUser( data.uid, ( snapshot ) => {
       const user = snapshot.val()
 
-      this.props.updateCurrentUser(user)
+      this.props.updateCurrentUser( user )
 
-      if (user) return this.handleLogin(user)
+      if ( user ) return this.handleLogin( user )
 
-      createUserFromFacebookRedirect((uid) => {
-        getUser(uid).then(_snapshot => {
+      createUserFromFacebookRedirect(( uid ) => {
+        getUser( uid ).then(( _snapshot ) => {
           const _user = _snapshot.val()
-          if (_user) this.handleLogin(_user)
+          if ( _user ) this.handleLogin( _user )
         })
       })
     })
   }
 
-  handleHistoryListen(location = {}) {
-    if (location.pathname !== this.props.location.pathname) {
+  handleHistoryListen ( location = {}) {
+    if ( location.pathname !== this.props.location.pathname ) {
       this.props.location.pathname = location.pathname || window.location.pathname
       this.forceUpdate()
     }
   }
 
-  toggleTheme() {
+  toggleTheme () {
     const newTheme = this.props.theme === 'light' ? 'dark' : 'light'
-    this.props.dispatchThemeChange(newTheme)
+    this.props.dispatchThemeChange( newTheme )
   }
 
-  renderLoading() {
+  renderLoading () {
     return (
       <main id='loading-view' className='view'>
         <h1>loading</h1>
@@ -124,25 +123,27 @@ class App extends React.Component {
     )
   }
 
-  render() {
+  render () {
     const contentWrapperStyle = {
-      height: this.state.contentHeight
+      height: this.state.contentHeight,
     }
 
-    if (this.state.isLoading) return (
-      <div className='content-wrapper' style={contentWrapperStyle}>
-        {this.renderLoading()}
-      </div>
-    )
+    if ( this.state.isLoading ) {
+      return (
+        <div className='content-wrapper' style={contentWrapperStyle}>
+          {this.renderLoading()}
+        </div>
+      )
+    }
 
     return (
       <div className='content-wrapper' style={contentWrapperStyle}>
         <Header {...this.props} />
         <Switch>
           <Route exact path='/' component={HomeView} />
-          <PropsRoute path='/map' component={MapView} {...this.props} />
+          <Route path='/map' component={MapViewContainer} />
           <Route path='/sample' component={SampleComponent} />
-          <PropsRoute path='/login' component={LoginView} {...this.props} />
+          <Route path='/login' component={LoginViewContainer} />
           <Route path='/signup' component={SignupView} />
           <PropsRoute path='/save-place' component={SavePlaceView} {...this.props} />
           <PropsRoute path='/search' component={SearchView} {...this.props} />

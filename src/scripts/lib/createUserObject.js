@@ -1,6 +1,6 @@
 import userSchema from '../schema/userSchema'
 
-const createUserObject = (userData) => {
+const createUserObject = ( userData ) => {
   return Object.assign(
     {},
     userSchema,

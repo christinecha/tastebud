@@ -6,10 +6,10 @@ const config = {
   databaseURL: 'https://tastebud-23bc0.firebaseio.com',
   projectId: 'tastebud-23bc0',
   storageBucket: 'tastebud-23bc0.appspot.com',
-  messagingSenderId: '835461059805'
+  messagingSenderId: '835461059805',
 }
 
-firebase.initializeApp(config)
+firebase.initializeApp( config )
 
 export const ref = firebase.database().ref()
 export const firebaseAuth = firebase.auth

@@ -1,7 +1,7 @@
 import React from 'react'
 
 class NavItem extends React.Component {
-  render() {
+  render () {
     return (
       <div className='nav-item'>{this.props.children}</div>
     )

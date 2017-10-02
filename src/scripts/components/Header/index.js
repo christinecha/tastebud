@@ -4,21 +4,21 @@ import { logout } from '../../db/auth'
 import NavItem from './NavItem'
 
 class Header extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
 
-    this.handleClick = this.handleClick.bind(this)
+    this.handleClick = this.handleClick.bind( this )
   }
 
-  handleClick() {
+  handleClick () {
     logout().then(() => {
-      this.props.history.push('/')
+      this.props.history.push( '/' )
     })
   }
 
-  render() {
+  render () {
     const { currentUser } = this.props
-    if (!currentUser) return null
+    if ( !currentUser ) return null
 
     return (
       <nav id='header'>
@@ -27,7 +27,7 @@ class Header extends React.Component {
         {/* {!currentUser && <Link to='/signup'>Signup</Link>} */}
         <NavItem><Link to='/map' className='label'>Places</Link></NavItem>
         <NavItem><Link to='/search' className='label'>Search</Link></NavItem>
-        <NavItem><Link to={`/users/${currentUser.uid}`} className='label'>Profile</Link></NavItem>
+        <NavItem><Link to={`/users/${ currentUser.uid }`} className='label'>Profile</Link></NavItem>
         <NavItem><div onClick={this.handleClick} className='label'>Sign Out</div></NavItem>
       </nav>
     )

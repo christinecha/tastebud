@@ -7,7 +7,7 @@ const mapConfig = {
   mapTypeControl: false,
   fullScreenControl: false,
   styles: mapStyle,
-  zoom: 12
+  zoom: 12,
 }
 
 export default mapConfig

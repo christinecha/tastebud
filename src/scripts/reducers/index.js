@@ -4,7 +4,7 @@ import currentLocation from './currentLocation'
 
 const reducers = {
   currentUser,
-  currentLocation
+  currentLocation,
 }
 
 export default reducers

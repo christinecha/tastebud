@@ -1,13 +1,13 @@
 import React from 'react'
 
 class Instructions extends React.Component {
-  render() {
+  render () {
     const vocab = {
-      0: { noun: 'a place', pronoun: 'it'},
-      1: { noun: 'a friend', pronoun: 'them'}
+      0: { noun: 'a place', pronoun: 'it' },
+      1: { noun: 'a friend', pronoun: 'them' },
     }
 
-    const { noun, pronoun } = vocab[this.props.searchType]
+    const { noun, pronoun } = vocab[ this.props.searchType ]
 
     return (
       <div className='instructions'>

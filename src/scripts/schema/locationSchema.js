@@ -7,7 +7,7 @@ const locationSchema = {
   rating: 0,
   types: [],
   users: [],
-  vicinity: ''
+  vicinity: '',
 }
 
 export default locationSchema

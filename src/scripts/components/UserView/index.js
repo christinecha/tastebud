@@ -8,91 +8,89 @@ import { getFollowerInfo } from '../../lib/getFollowerInfo'
 import EditUser from './EditUser'
 import PlaceList from '../PlaceList'
 
-
 class UserView extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
 
-    this.handleWatchUser = this.handleWatchUser.bind(this)
-    this.getUserPlaces = this.getUserPlaces.bind(this)
+    this.handleWatchUser = this.handleWatchUser.bind( this )
+    this.getUserPlaces = this.getUserPlaces.bind( this )
 
     this.state = {
       user: null,
       places: [],
-      isEditing: false
+      isEditing: false,
     }
   }
 
-  componentDidMount() {
+  componentDidMount () {
     const userId = this.props.computedMatch.params.uid
     this.firstLoad = true
 
-    watchUser(userId, this.handleWatchUser)
+    watchUser( userId, this.handleWatchUser )
   }
 
-  handleWatchUser(snapshot) {
-    if (this.isUnmounting) return
+  handleWatchUser ( snapshot ) {
+    if ( this.isUnmounting ) return
 
     const user = snapshot.val()
-    this.setState({ user }, this.getUserPlaces)
+    this.setState({ user }, this.getUserPlaces )
 
     const { currentUser } = this.props
-    if (currentUser && user.uid === currentUser.uid) {
-      if (currentUser.firstLogin) {
+    if ( currentUser && user.uid === currentUser.uid ) {
+      if ( currentUser.firstLogin ) {
         currentUser.firstLogin = false
-        saveUser(currentUser)
+        saveUser( currentUser )
       }
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount () {
     const userId = this.props.computedMatch.params.uid
     this.isUnmounting = true
-    unwatchUser(userId, this.handleWatchUser)
+    unwatchUser( userId, this.handleWatchUser )
   }
 
-  updateStateArray(key, newItem, i) {
-    let items = this.state[key].slice()
+  updateStateArray ( key, newItem, i ) {
+    let items = this.state[ key ].slice()
 
-    if (i !== undefined) items[i] = newItem
-    else items.push(newItem)
+    if ( i !== undefined ) items[ i ] = newItem
+    else items.push( newItem )
 
     const stateObj = {}
-    stateObj[key] = items
+    stateObj[ key ] = items
 
-
-    this.setState(stateObj)
+    this.setState( stateObj )
   }
 
-  getUserPlaces() {
-    if (!this.firstLoad) return
+  getUserPlaces () {
+    if ( !this.firstLoad ) return
 
     const { user } = this.state
     const { currentUser } = this.props
 
-    if (!user || !user.places) return
-    if (!currentUser) return
+    if ( !user || !user.places ) return
+    if ( !currentUser ) return
 
-    getPlacesWithFollowerInfo(user.places, currentUser)
-    .then(places => {
-      if (this.isUnmounting) return
+    getPlacesWithFollowerInfo( user.places, currentUser )
+    .then(( places ) => {
+      if ( this.isUnmounting ) return
       this.setState({ places })
 
       this.firstLoad = false
     })
   }
 
-  followUser() {
+  followUser () {
     const { currentUser } = this.props
     const { user } = this.state
 
-    followUser(currentUser, user.uid)
+    followUser( currentUser, user.uid )
   }
 
-  renderStats() {
+  renderStats () {
     const { user } = this.state
 
-    if (!user) return null
+    if ( !user ) return null
 
     const places = user.places || []
     const following = user.following || []
@@ -105,13 +103,13 @@ class UserView extends React.Component {
           <h4 className='number'>{places.length}</h4>
         </div>
         <div className='stats-followers'>
-          <Link to={`/users/${user.uid}/followers`}>
+          <Link to={`/users/${ user.uid }/followers`}>
             <p className='label'>Followers</p>
             <h4 className='number'>{followers.length}</h4>
           </Link>
         </div>
         <div className='stats-following'>
-          <Link to={`/users/${user.uid}/following`}>
+          <Link to={`/users/${ user.uid }/following`}>
             <p className='label'>Following</p>
             <h4 className='number'>{following.length}</h4>
           </Link>
@@ -120,12 +118,12 @@ class UserView extends React.Component {
     )
   }
 
-  renderUserInfo() {
+  renderUserInfo () {
     const { currentUser } = this.props
     const { user } = this.state
-    if (!user) return null
+    if ( !user ) return null
 
-    if (this.state.isEditing) return <EditUser {...this.props} />
+    if ( this.state.isEditing ) return <EditUser {...this.props} />
 
     const isSelf = (
       currentUser &&
@@ -158,7 +156,7 @@ class UserView extends React.Component {
     )
   }
 
-  render() {
+  render () {
     return (
       <main id='user-view' className='view'>
         {this.renderUserInfo()}

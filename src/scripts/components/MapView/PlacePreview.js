@@ -1,19 +1,18 @@
 import React from 'react'
 import getFriendlyDistance from '../../lib/getFriendlyDistance'
 
-
 class PlacePreview extends React.Component {
-  render() {
+  render () {
     const { activePlace } = this.props
 
-    if (!activePlace) return null
+    if ( !activePlace ) return null
 
     const latLng = {
       lat: activePlace.lat,
-      lng: activePlace.lng
+      lng: activePlace.lng,
     }
 
-    const distance = getFriendlyDistance(latLng, this.props.currentLocation)
+    const distance = getFriendlyDistance( latLng, this.props.currentLocation )
 
     return (
       <div className='place-preview'>

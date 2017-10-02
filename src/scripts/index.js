@@ -12,20 +12,19 @@ import { updatePlace } from './actions'
 import reducers from './reducers'
 import AppContainer from './components/AppContainer'
 
-const $app = document.getElementById('app')
+const $app = document.getElementById( 'app' )
 
 const store = createStore(
   combineReducers({
     ...reducers,
-    routing: routerReducer
+    routing: routerReducer,
   }),
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 )
 
+const history = syncHistoryWithStore( createBrowserHistory(), store )
 
-const history = syncHistoryWithStore(createBrowserHistory(), store)
-
-const AppContainerWithRouter = withRouter(AppContainer)
+const AppContainerWithRouter = withRouter( AppContainer )
 
 ReactDOM.render(
   <Provider store={store}>

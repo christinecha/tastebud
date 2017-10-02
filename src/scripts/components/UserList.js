@@ -3,49 +3,49 @@ import { Link } from 'react-router-dom'
 import { getUser } from '../db/user'
 
 class UserList extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
 
     this.state = {
-      users: []
+      users: [],
     }
   }
 
-  componentWillMount() {
-    if (this.props.users[0] && typeof this.props.users[0] === 'object') {
+  componentWillMount () {
+    if ( this.props.users[ 0 ] && typeof this.props.users[ 0 ] === 'object' ) {
       this.setState({ users: this.props.users })
     }
   }
 
-  componentWillReceiveProps(props) {
-    if (this.state.users.length > 0) return
+  componentWillReceiveProps ( props ) {
+    if ( this.state.users.length > 0 ) return
 
-    this.getUsers(props.users).then(userSnapshots => {
-      if (this.isUnmounting) return
+    this.getUsers( props.users ).then(( userSnapshots ) => {
+      if ( this.isUnmounting ) return
       this.setState({
-        users: userSnapshots.map(s => s.val())
+        users: userSnapshots.map(( s ) => s.val()),
       })
     })
   }
 
-  componentWillUnmount() {
+  componentWillUnmount () {
     this.isUnmounting = true
   }
 
-  getUsers(users) {
-    if (!users) users = this.props.users
+  getUsers ( users ) {
+    if ( !users ) users = this.props.users
 
-    const promises = users.map(uid => getUser(uid))
+    const promises = users.map(( uid ) => getUser( uid ))
 
-    return Promise.all(promises)
+    return Promise.all( promises )
   }
 
-  renderUsers() {
-    return this.state.users.map(user => {
-      if (!user) return null
+  renderUsers () {
+    return this.state.users.map(( user ) => {
+      if ( !user ) return null
 
       return (
-        <Link to={`/users/${user.uid}`} key={user.uid}>
+        <Link to={`/users/${ user.uid }`} key={user.uid}>
           <div className='user'>
             <div className='profile-picture'></div>
             <div className='info'>
@@ -58,7 +58,7 @@ class UserList extends React.Component {
     })
   }
 
-  render() {
+  render () {
     return (
       <div className='user-list'>
         {this.renderUsers()}

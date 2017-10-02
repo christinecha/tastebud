@@ -3,64 +3,64 @@ import { addUserToPlace, removeUserFromPlace, newPlace } from '../db/place'
 import { updateUser, addPlaceToUser, removePlaceFromUser } from '../db/user'
 
 class Place extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
 
     this.state = {
-      deleted: false
+      deleted: false,
     }
 
-    this.handleClickDelete = this.handleClickDelete.bind(this)
-    this.handleClickSave = this.handleClickSave.bind(this)
+    this.handleClickDelete = this.handleClickDelete.bind( this )
+    this.handleClickSave = this.handleClickSave.bind( this )
   }
 
-  componentDidMount() {
-    this.service = new google.maps.places.PlacesService(this.$result)
+  componentDidMount () {
+    this.service = new google.maps.places.PlacesService( this.$result )
   }
 
-  isAlreadySaved() {
+  isAlreadySaved () {
     const { currentUser, place } = this.props
-    if (!currentUser) return
-    if (!currentUser.places) return
+    if ( !currentUser ) return
+    if ( !currentUser.places ) return
 
-    return currentUser.places.indexOf(this.getPlaceId()) > -1
+    return currentUser.places.indexOf( this.getPlaceId()) > -1
   }
 
-  getPlaceId() {
+  getPlaceId () {
     return this.props.place.place_id || this.props.place.id
   }
 
-  getPlaceDetails(placeId) {
-    if (this.isAlreadySaved()) return Promise.resolve()
+  getPlaceDetails ( placeId ) {
+    if ( this.isAlreadySaved()) return Promise.resolve()
 
-    return new Promise((resolve, reject) => {
+    return new Promise(( resolve, reject ) => {
       this.service.getDetails(
         { placeId: this.props.place.place_id },
-        (place, status) => {
-          if (status !== google.maps.places.PlacesServiceStatus.OK) return
-          resolve(place)
+        ( place, status ) => {
+          if ( status !== google.maps.places.PlacesServiceStatus.OK ) return
+          resolve( place )
         }
       )
     })
   }
 
-  updateAddedPlaceAndUser(placeId) {
+  updateAddedPlaceAndUser ( placeId ) {
     const { currentUser } = this.props
-    addUserToPlace(placeId, currentUser.uid)
-    return addPlaceToUser(currentUser, placeId)
+    addUserToPlace( placeId, currentUser.uid )
+    return addPlaceToUser( currentUser, placeId )
   }
 
-  handleClickSave() {
+  handleClickSave () {
     const _place = this.props.place
 
-    if (!_place.place_id) {
-      this.updateAddedPlaceAndUser(_place.id)
+    if ( !_place.place_id ) {
+      this.updateAddedPlaceAndUser( _place.id )
       this.setState({ deleted: false })
       return
     }
 
     this.getPlaceDetails()
-    .then(place => {
+    .then(( place ) => {
       const placeData = {
         name: place.name,
         id: place.place_id,
@@ -69,30 +69,30 @@ class Place extends React.Component {
         pricePoint: place.price_level || 0,
         rating: place.rating,
         types: place.types,
-        vicinity: place.vicinity
+        vicinity: place.vicinity,
       }
 
-      newPlace(placeData).then((placeId) => {
-        this.updateAddedPlaceAndUser(placeId)
+      newPlace( placeData ).then(( placeId ) => {
+        this.updateAddedPlaceAndUser( placeId )
         .then(() => {
-          this.props.history.push(`/users/${this.props.currentUser.uid}`)
+          this.props.history.push( `/users/${ this.props.currentUser.uid }` )
         })
       })
     })
   }
 
-  handleClickDelete() {
+  handleClickDelete () {
     const { currentUser, place } = this.props
-    if (!currentUser) return
+    if ( !currentUser ) return
 
     this.setState({ deleted: true })
 
-    removeUserFromPlace(this.getPlaceId(), currentUser.uid)
-    removePlaceFromUser(currentUser, this.getPlaceId())
+    removeUserFromPlace( this.getPlaceId(), currentUser.uid )
+    removePlaceFromUser( currentUser, this.getPlaceId())
   }
 
-  renderButton() {
-    if (this.isAlreadySaved() && !this.state.deleted) {
+  renderButton () {
+    if ( this.isAlreadySaved() && !this.state.deleted ) {
       // return <button className='edit knockout' onClick={() => {}}>x</button>
       return <div className='delete' onClick={this.handleClickDelete}></div>
     }
@@ -100,13 +100,13 @@ class Place extends React.Component {
     return <button className='save' onClick={this.handleClickSave}>+ Save</button>
   }
 
-  render() {
+  render () {
     const { place } = this.props
 
     return (
       <div className='place'>
         <div className='info'>
-          <div ref={$result => this.$result = $result}></div>
+          <div ref={( $result ) => this.$result = $result}></div>
           <div className='icon'></div>
           <h3 className='name'>{place.name}</h3>
           <p className='vicinity label'>{place.vicinity}</p>

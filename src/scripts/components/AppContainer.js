@@ -3,31 +3,31 @@ import { withRouter } from 'react-router-dom'
 import { updateCurrentUser, updateCurrentLocation } from '../actions'
 import App from './App'
 
-const mapStateToProps = (state) => {
+const mapStateToProps = ( state ) => {
   return {
     currentUser: state.currentUser,
     routing: state.routing,
     currentLocation: {
       lat: state.currentLocation.lat,
-      lng: state.currentLocation.lng
-    }
+      lng: state.currentLocation.lng,
+    },
   }
 }
 
-const mapDispatchToProps = (dispatch) => {
+const mapDispatchToProps = ( dispatch ) => {
   return {
-    updateCurrentUser: (user) => {
-      dispatch(updateCurrentUser(user))
+    updateCurrentUser: ( user ) => {
+      dispatch( updateCurrentUser( user ))
     },
-    updateCurrentLocation: (location) => {
-      dispatch(updateCurrentLocation(location))
-    }
+    updateCurrentLocation: ( location ) => {
+      dispatch( updateCurrentLocation( location ))
+    },
   }
 }
 
 const AppContainer = connect(
   mapStateToProps,
   mapDispatchToProps
-)(App)
+)( App )
 
-export default withRouter(AppContainer)
+export default withRouter( AppContainer )

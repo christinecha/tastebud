@@ -6,13 +6,12 @@ import generateFormGroup from '../generate/FormGroup'
 import * as constants from './constants'
 import * as hasError from './hasError'
 
-
 class SignupView extends React.Component {
-  constructor(props) {
-    super(props)
+  constructor ( props ) {
+    super( props )
 
-    this.handleClick = this.handleClick.bind(this)
-    this.handleInputChange = this.handleInputChange.bind(this)
+    this.handleClick = this.handleClick.bind( this )
+    this.handleInputChange = this.handleInputChange.bind( this )
 
     this.state = {
       step: 0,
@@ -21,70 +20,68 @@ class SignupView extends React.Component {
       username: '',
       password: '',
       isValidated: false,
-      loginMessage: ''
+      loginMessage: '',
     }
   }
 
-  handleClick() {
-    if (!this.state.isValidated) return
+  handleClick () {
+    if ( !this.state.isValidated ) return
 
-    const step = constants.STEPS[this.state.step]
+    const step = constants.STEPS[ this.state.step ]
 
     const newState = {}
-    newState[step] = this.$input.value
-
+    newState[ step ] = this.$input.value
 
     newState.step = this.state.step + 1
     newState.isValidated = false
 
     this.$input.value = ''
-    this.setState(newState, () => {
-
+    this.setState( newState, () => {
       // This was the last step of the form!
-      if (this.state.step === Object.keys(constants.STEPS).length) {
+      if ( this.state.step === Object.keys( constants.STEPS ).length ) {
         this.submitForm()
       }
     })
   }
 
-  getValidated(value) {
-    const step = constants.STEPS[this.state.step]
+  getValidated ( value ) {
+    const step = constants.STEPS[ this.state.step ]
 
-    hasError[step](value).then(error => {
+    hasError[ step ]( value ).then(( error ) => {
       this.setState({ isValidated: !error })
     })
   }
 
-  submitForm() {
+  submitForm () {
     const { fullName, email, username, password } = this.state
 
-    signUpWithEmail(email, password)
-    .then((response) => {
+    signUpWithEmail( email, password )
+    .then(( response ) => {
       saveUser({
         uid: response.uid,
         fullName,
         email,
         username,
-        dateJoined: performance.now()
+        dateJoined: performance.now(),
       })
     })
-    .catch((error) => {
-      console.log(error)
-      this.setState(setErrorMsg('Invalid username/password.'))
+    .catch(( error ) => {
+      console.log( error )
+      this.setState( setErrorMsg( 'Invalid username/password.' ))
     })
   }
 
-  handleInputChange(e) {
-    const step = constants.STEPS[this.state.step]
+  handleInputChange ( e ) {
+    const step = constants.STEPS[ this.state.step ]
 
-    this.getValidated(e.target.value)
+    this.getValidated( e.target.value )
   }
 
-  renderInput() {
-    const step = constants.STEPS[this.state.step]
-    const type = constants.INPUT_TYPES[step]
-    const label = constants.LABELS[step]
-    const placeholder = constants.PLACEHOLDERS[step]
+  renderInput () {
+    const step = constants.STEPS[ this.state.step ]
+    const type = constants.INPUT_TYPES[ step ]
+    const label = constants.LABELS[ step ]
+    const placeholder = constants.PLACEHOLDERS[ step ]
 
     return (
       <div>
@@ -92,7 +89,7 @@ class SignupView extends React.Component {
         <div className='input-wrapper'>
           <input
             className='full-width'
-            ref={$input => this.$input = $input}
+            ref={( $input ) => this.$input = $input}
             type={type}
             placeholder={placeholder}
             onChange={this.handleInputChange}
@@ -104,8 +101,8 @@ class SignupView extends React.Component {
     )
   }
 
-  render() {
-    const buttonClassName = `button full-width ${!this.state.isValidated && 'inactive'}`
+  render () {
+    const buttonClassName = `button full-width ${ !this.state.isValidated && 'inactive' }`
 
     return (
       <main id='signup-view'>
