@@ -145,25 +145,35 @@ class MapView extends React.Component {
     )
   }
 
+  renderMapTools() {
+    return (
+      <div className='map-tools'>
+        <div className='input-wrapper'>
+          <input type='text' placeholder='New York, NY'/>
+          <div className='more'>&bull; &bull; &bull;</div>
+        </div>
+        <div className='reference'>
+          <div className='type label yours'>
+            <div className='icon'></div>
+            Yours
+          </div>
+          <div className='type label friends'>
+            <div className='icon'></div>
+            Friends
+          </div>
+          <div className='type label popular'>
+            <div className='icon'></div>
+            Popular
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   render () {
     return (
       <main id='map-view' className='view'>
-        <div className='map-tools'>
-          <div className='reference'>
-            <div className='type label yours'>
-              <div className='icon'></div>
-              Yours
-            </div>
-            <div className='type label friends'>
-              <div className='icon'></div>
-              Friends
-            </div>
-            <div className='type label popular'>
-              <div className='icon'></div>
-              Popular
-            </div>
-          </div>
-        </div>
+        {this.renderMapTools()}
         <div id='google-maps' ref={( $map ) => this.$map = $map}></div>
         {this.renderPlacePreview()}
       </main>
