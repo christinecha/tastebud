@@ -29348,6 +29348,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var FORCE_REDIRECT_PATHS = ['/', '/login'];
+
 var App = function (_React$Component) {
   _inherits(App, _React$Component);
 
@@ -29414,14 +29416,21 @@ var App = function (_React$Component) {
   }, {
     key: 'handleLogin',
     value: function handleLogin(user) {
+      var history = this.props.history;
+
       this.setState({ isLoading: false });
 
       if (user.firstLogin) {
-        this.props.history.push('/users/' + user.uid);
+        history.push('/users/' + user.uid);
         return;
       }
 
-      if (this.props.history.location.pathname !== '/') return;else this.props.history.push('/map');
+      var location = history.location;
+      var pathname = location.pathname;
+
+      if (FORCE_REDIRECT_PATHS.indexOf(pathname) < 0) return;
+
+      history.push('/map');
     }
   }, {
     key: 'handleAuthStateChange',
@@ -29953,6 +29962,8 @@ var _react = __webpack_require__(3);
 
 var _react2 = _interopRequireDefault(_react);
 
+var _reactRouterDom = __webpack_require__(27);
+
 var _auth = __webpack_require__(40);
 
 var _user = __webpack_require__(13);
@@ -29976,7 +29987,7 @@ var LoginView = function (_React$Component) {
     _this.handleSubmit = _this.handleSubmit.bind(_this);
 
     _this.state = {
-      loginMessage: ''
+      errorMsg: null
     };
     return _this;
   }
@@ -29989,11 +30000,7 @@ var LoginView = function (_React$Component) {
       e.preventDefault();
 
       (0, _auth.login)(this.email.value, this.pw.value).then(function (data) {
-        (0, _user.getUser)(data.uid).then(function (snapshot) {
-          var user = snapshot.val();
-          _this2.props.updateCurrentUser(user);
-          _this2.props.history.push('/map');
-        });
+        return _this2.handleLogin(data.uid);
       }).catch(function (error) {
         return _this2.setErrorMsg('Invalid username/password.', error);
       });
@@ -30017,73 +30024,94 @@ var LoginView = function (_React$Component) {
       });
     }
   }, {
-    key: 'render',
-    value: function render() {
+    key: 'handleLogin',
+    value: function handleLogin(uid) {
       var _this4 = this;
 
-      console.log('render');
+      (0, _user.getUser)(uid).then(function (snapshot) {
+        var user = snapshot.val();
+        _this4.props.updateCurrentUser(user);
+        _this4.props.history.push('/map');
+      });
+    }
+  }, {
+    key: 'renderErrorMsg',
+    value: function renderErrorMsg() {
+      if (!this.state.errorMsg) return null;
+
+      return _react2.default.createElement(
+        'div',
+        { className: 'error-msg small' },
+        this.state.errorMsg
+      );
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      var _this5 = this;
+
       return _react2.default.createElement(
         'main',
         { id: 'login-view', className: 'view' },
         _react2.default.createElement(
-          'h1',
-          null,
-          ' Login '
-        ),
-        _react2.default.createElement(
-          'form',
-          { onSubmit: this.handleSubmit },
+          'div',
+          { className: 'content-wrapper' },
+          _react2.default.createElement('div', { className: 'illustration' }),
           _react2.default.createElement(
-            'div',
-            { className: 'form-group' },
-            _react2.default.createElement(
-              'label',
-              null,
-              'Email'
-            ),
-            _react2.default.createElement('input', { className: 'form-control', ref: function ref(email) {
-                return _this4.email = email;
-              }, placeholder: 'Email' })
+            'h1',
+            null,
+            ' Login '
           ),
           _react2.default.createElement(
-            'div',
-            { className: 'form-group' },
+            'form',
+            { onSubmit: this.handleSubmit },
+            _react2.default.createElement('input', {
+              type: 'email',
+              className: 'login-input email',
+              ref: function ref($e) {
+                return _this5.email = $e;
+              },
+              placeholder: 'Email'
+            }),
             _react2.default.createElement(
-              'label',
-              null,
-              'Password'
+              'div',
+              { className: 'input-wrapper' },
+              _react2.default.createElement('input', {
+                type: 'password',
+                className: 'login-input password',
+                ref: function ref($p) {
+                  return _this5.pw = $p;
+                },
+                placeholder: 'Password'
+              }),
+              _react2.default.createElement(
+                'div',
+                { className: 'forgot-password small' },
+                'Forgot?'
+              )
             ),
-            _react2.default.createElement('input', { type: 'password', className: 'form-control', placeholder: 'Password', ref: function ref(pw) {
-                return _this4.pw = pw;
-              } })
-          ),
-          this.state.loginMessage && _react2.default.createElement(
-            'div',
-            { className: 'alert alert-danger', role: 'alert' },
-            _react2.default.createElement('span', { className: 'glyphicon glyphicon-exclamation-sign', 'aria-hidden': 'true' }),
+            this.renderErrorMsg(),
             _react2.default.createElement(
-              'span',
-              { className: 'sr-only' },
-              'Error:'
-            ),
-            '\xA0',
-            this.state.loginMessage,
-            ' ',
-            _react2.default.createElement(
-              'a',
-              { href: '#', onClick: this.resetPassword, className: 'alert-link' },
-              'Forgot Password?'
+              'button',
+              { type: 'submit', className: 'submit' },
+              'Log In'
             )
           ),
+          _react2.default.createElement('hr', null),
           _react2.default.createElement(
             'button',
-            { type: 'submit', className: 'btn btn-primary' },
-            'Login'
+            { className: 'button facebook-login full-width', onClick: _auth.signInWithFacebook },
+            'or continue with Facebook'
           ),
-          this.state.errorMsg && _react2.default.createElement(
+          _react2.default.createElement(
             'div',
-            { className: 'error' },
-            this.state.errorMsg
+            { className: 'sign-up-instruction small' },
+            'Don\'t have an account? ',
+            _react2.default.createElement(
+              _reactRouterDom.Link,
+              { to: '/signup' },
+              'Sign Up'
+            )
           )
         )
       );
@@ -31859,113 +31887,54 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 var mapStyle = [{
-  'elementType': 'geometry',
-  'stylers': [{
-    'color': '#d3d2d4'
-  }]
-}, {
-  'elementType': 'labels.icon',
-  'stylers': [{
-    'visibility': 'off'
-  }]
-}, {
-  'elementType': 'labels.text.fill',
-  'stylers': [{
-    'color': '#3f3f40'
-  }]
-}, {
-  'elementType': 'labels.text.stroke',
-  'stylers': [{
-    'color': '#f5f5f5'
-  }]
-}, {
   'featureType': 'administrative',
-  'elementType': 'geometry',
-  'stylers': [{
-    'visibility': 'off'
-  }]
-}, {
-  'featureType': 'administrative.land_parcel',
   'elementType': 'labels.text.fill',
   'stylers': [{
-    'color': '#bdbdbd'
+    'color': '#444444'
+  }, {
+    'lightness': 30
   }]
 }, {
-  'featureType': 'poi',
-  'stylers': [{
-    'visibility': 'off'
-  }]
-}, {
-  'featureType': 'poi',
-  'elementType': 'geometry',
-  'stylers': [{
-    'color': '#eeeeee'
-  }]
-}, {
-  'featureType': 'poi',
-  'elementType': 'labels.text.fill',
-  'stylers': [{
-    'color': '#757575'
-  }]
-}, {
-  'featureType': 'poi.park',
-  'elementType': 'geometry',
-  'stylers': [{
-    'color': '#e5e5e5'
-  }]
-}, {
-  'featureType': 'poi.park',
-  'elementType': 'labels.text.fill',
-  'stylers': [{
-    'color': '#9e9e9e'
-  }]
-}, {
-  'featureType': 'road',
-  'elementType': 'geometry',
-  'stylers': [{
-    'color': '#ffffff'
-  }]
-}, {
-  'featureType': 'road',
-  'elementType': 'geometry.fill',
-  'stylers': [{
-    'color': '#edebf0'
-  }]
-}, {
-  'featureType': 'road',
-  'elementType': 'labels.icon',
-  'stylers': [{
-    'visibility': 'off'
-  }]
-}, {
-  'featureType': 'road',
+  'featureType': 'administrative.locality',
   'elementType': 'labels.text',
   'stylers': [{
-    'color': '#f8f7ff'
+    'lightness': 65
+  }]
+}, {
+  'featureType': 'landscape',
+  'stylers': [{
+    'color': '#f2f2f2'
+  }]
+}, {
+  'featureType': 'poi',
+  'stylers': [{
+    'visibility': 'off'
+  }]
+}, {
+  'featureType': 'poi.park',
+  'elementType': 'geometry.fill',
+  'stylers': [{
+    'color': '#7e8281'
+  }, {
+    'visibility': 'simplified'
+  }]
+}, {
+  'featureType': 'road',
+  'stylers': [{
+    'saturation': -100
+  }, {
+    'lightness': 45
   }]
 }, {
   'featureType': 'road.arterial',
-  'elementType': 'labels.text.fill',
+  'elementType': 'labels.icon',
   'stylers': [{
-    'color': '#757575'
+    'visibility': 'off'
   }]
 }, {
   'featureType': 'road.highway',
-  'elementType': 'geometry',
   'stylers': [{
-    'color': '#dadada'
-  }]
-}, {
-  'featureType': 'road.highway',
-  'elementType': 'labels.text.fill',
-  'stylers': [{
-    'color': '#616161'
-  }]
-}, {
-  'featureType': 'road.local',
-  'elementType': 'labels.text.fill',
-  'stylers': [{
-    'color': '#9e9e9e'
+    'visibility': 'simplified'
   }]
 }, {
   'featureType': 'transit',
@@ -31973,28 +31942,25 @@ var mapStyle = [{
     'visibility': 'off'
   }]
 }, {
-  'featureType': 'transit.line',
-  'elementType': 'geometry',
+  'featureType': 'water',
   'stylers': [{
-    'color': '#e5e5e5'
-  }]
-}, {
-  'featureType': 'transit.station',
-  'elementType': 'geometry',
-  'stylers': [{
-    'color': '#eeeeee'
+    'color': '#46bcec'
+  }, {
+    'visibility': 'on'
   }]
 }, {
   'featureType': 'water',
-  'elementType': 'geometry',
+  'elementType': 'geometry.fill',
   'stylers': [{
-    'color': '#c9c9c9'
+    'saturation': -45
+  }, {
+    'lightness': 65
   }]
 }, {
   'featureType': 'water',
   'elementType': 'labels.text.fill',
   'stylers': [{
-    'color': '#9e9e9e'
+    'saturation': -80
   }]
 }];
 
@@ -33169,7 +33135,7 @@ exports = module.exports = __webpack_require__(276)();
 
 
 // module
-exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 100%;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\n.content-wrapper {\n  position: relative;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\ninput:focus {\n  outline: none;\n}\n.view {\n  padding-bottom: 60px;\n  min-height: calc(100% - 60px);\n  box-sizing: border-box;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 100%;\n  height: 60px;\n  padding: 15px;\n  box-sizing: border-box;\n  z-index: 1;\n  background-color: #fff;\n  display: flex;\n  justify-content: space-around;\n  background-color: #f7f7f7;\n}\n#header .nav-item {\n  width: 25%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-right: 1px solid #aaaaaa;\n}\n#header .nav-item:last-child {\n  border: none;\n}\n#header .nav-item .label {\n  font-size: 8px;\n}\n#home-view h1 {\n  margin: 50px 0;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#home-view hr {\n  margin: 20px 40%;\n  border: 1px solid #f7f7f7;\n}\n#home-view .log-in-prompt {\n  margin-top: 30px;\n}\n#home-view .log-in-prompt .log-in {\n  margin-left: 1ch;\n  border-bottom: 1px solid #3c3c3c;\n}\n#loading-view {\n  display: flex;\n  flex-direction: column;\n  align-content: center;\n  justify-content: center;\n}\n#map-view {\n  position: relative;\n  width: 100%;\n  height: calc(100% - 60px);\n  padding: 0;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n}\n#map-view .place-preview {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding: 10px;\n  box-sizing: border-box;\n}\n#map-view .place-preview .place-preview-content {\n  text-align: left;\n  background-color: #fff;\n  border-radius: 3px;\n  padding: 10px;\n}\n#map-view .place-preview .place-preview-content hr {\n  margin-top: 15px;\n  margin-bottom: 15px;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n.place-list {\n  padding: 20px;\n}\n.place-list .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n  display: flex;\n  align-items: center;\n}\n.place-list .info {\n  flex-grow: 1;\n}\n.place-list button {\n  width: 75px;\n}\n.place-list .delete {\n  width: 20px;\n  height: 20px;\n  background-image: url(/assets/images/x.svg);\n  opacity: 0.6;\n}\n#search-view {\n  display: flex;\n  flex-direction: column;\n}\n#search-view .search-input {\n  width: 100%;\n  margin: 0;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-options {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .search-options .option {\n  width: 50%;\n  padding: 5px;\n}\n#search-view .search-options .option:first-child {\n  border-right: 1px solid #f7f7f7;\n}\n#search-view .search-options .option[data-active=\"true\"] {\n  color: black;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n  margin: auto 0;\n}\n#search-view .search-results.has-results {\n  margin: 0 0;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n#signup-view .signup-form .input-wrapper {\n  position: relative;\n}\n#signup-view .signup-form .icon {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.user-list {\n  padding: 20px;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(217) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view {\n  padding-top: 20px;\n}\n#user-view .edit-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(217) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n", ""]);
+exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 100%;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\n.small {\n  font-size: 12px;\n  color: #aaaaaa;\n  text-transform: none;\n}\n.content-wrapper {\n  position: relative;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\ninput:focus {\n  outline: none;\n}\n.view {\n  padding-bottom: 60px;\n  min-height: calc(100% - 60px);\n  box-sizing: border-box;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 100%;\n  height: 60px;\n  padding: 15px;\n  box-sizing: border-box;\n  z-index: 1;\n  background-color: #fff;\n  display: flex;\n  justify-content: space-around;\n  background-color: #f7f7f7;\n}\n#header .nav-item {\n  width: 25%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-right: 1px solid #aaaaaa;\n}\n#header .nav-item:last-child {\n  border: none;\n}\n#header .nav-item .label {\n  font-size: 8px;\n}\n#home-view h1 {\n  margin: 50px 0;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#home-view hr {\n  margin: 20px 40%;\n  border: 1px solid #f7f7f7;\n}\n#home-view .log-in-prompt {\n  margin-top: 30px;\n}\n#home-view .log-in-prompt .log-in {\n  margin-left: 1ch;\n  border-bottom: 1px solid #3c3c3c;\n}\n#loading-view {\n  display: flex;\n  flex-direction: column;\n  align-content: center;\n  justify-content: center;\n}\n#login-view {\n  padding-top: 40px;\n}\n#login-view .illustration {\n  background-color: #f7f7f7;\n  width: 200px;\n  height: 200px;\n  margin: auto;\n}\n#login-view h1 {\n  margin: 20px auto;\n}\n#login-view .content-wrapper {\n  width: 85%;\n  margin: auto;\n}\n#login-view .input-wrapper {\n  position: relative;\n}\n#login-view .login-input {\n  width: 100%;\n  margin: 0;\n  border: 1px solid #f7f7f7;\n}\n#login-view .login-input:-webkit-autofill {\n  -webkit-box-shadow: 0 0 0px 1000px white inset;\n}\n#login-view .login-input.email {\n  border-top-left-radius: 5px;\n  border-top-right-radius: 5px;\n}\n#login-view .login-input.password {\n  border-top: none;\n  border-bottom-left-radius: 5px;\n  border-bottom-right-radius: 5px;\n}\n#login-view .forgot-password {\n  position: absolute;\n  right: 20px;\n  top: 36%;\n}\n#login-view .error-msg {\n  padding: 10px 0;\n  margin-top: 10px;\n  background-color: #f7f7f7;\n}\n#login-view .submit {\n  width: 100%;\n  margin-top: 30px;\n}\n#login-view hr {\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n  margin: 25px auto;\n}\n#login-view .facebook-login {\n  background-color: #39579A;\n}\n#login-view .sign-up-instruction {\n  margin-top: 30px;\n}\n#login-view .sign-up-instruction a {\n  font-weight: bold;\n  color: #3c3c3c;\n  cursor: pointer;\n}\n#map-view {\n  position: relative;\n  width: 100%;\n  height: calc(100% - 60px);\n  padding: 0;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n}\n#map-view .place-preview {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding: 10px;\n  box-sizing: border-box;\n}\n#map-view .place-preview .place-preview-content {\n  text-align: left;\n  background-color: #fff;\n  border-radius: 3px;\n  padding: 10px;\n}\n#map-view .place-preview .place-preview-content hr {\n  margin-top: 15px;\n  margin-bottom: 15px;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n.place-list {\n  padding: 20px;\n}\n.place-list .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n  display: flex;\n  align-items: center;\n}\n.place-list .info {\n  flex-grow: 1;\n}\n.place-list button {\n  width: 75px;\n}\n.place-list .delete {\n  width: 20px;\n  height: 20px;\n  background-image: url(/assets/images/x.svg);\n  opacity: 0.6;\n}\n#search-view {\n  display: flex;\n  flex-direction: column;\n}\n#search-view .search-input {\n  width: 100%;\n  margin: 0;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-options {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .search-options .option {\n  width: 50%;\n  padding: 5px;\n}\n#search-view .search-options .option:first-child {\n  border-right: 1px solid #f7f7f7;\n}\n#search-view .search-options .option[data-active=\"true\"] {\n  color: black;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n  margin: auto 0;\n}\n#search-view .search-results.has-results {\n  margin: 0 0;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n#signup-view .signup-form .input-wrapper {\n  position: relative;\n}\n#signup-view .signup-form .icon {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.user-list {\n  padding: 20px;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(217) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view {\n  padding-top: 20px;\n}\n#user-view .edit-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(217) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n", ""]);
 
 // exports
 

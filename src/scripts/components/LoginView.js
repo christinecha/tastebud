@@ -1,5 +1,6 @@
 import React from 'react'
-import { login, resetPassword } from '../db/auth'
+import { Link } from 'react-router-dom'
+import { login, resetPassword, signInWithFacebook } from '../db/auth'
 import { getUser } from '../db/user'
 
 class LoginView extends React.Component {
@@ -9,7 +10,7 @@ class LoginView extends React.Component {
     this.handleSubmit = this.handleSubmit.bind( this )
 
     this.state = {
-      loginMessage: '',
+      errorMsg: null,
     }
   }
 
@@ -17,13 +18,7 @@ class LoginView extends React.Component {
     e.preventDefault()
 
     login( this.email.value, this.pw.value )
-    .then(( data ) => {
-      getUser( data.uid ).then(( snapshot ) => {
-        const user = snapshot.val()
-        this.props.updateCurrentUser( user )
-        this.props.history.push( '/map' )
-      })
-    })
+    .then(( data ) => this.handleLogin( data.uid ))
     .catch(( error ) => this.setErrorMsg( 'Invalid username/password.', error ))
   }
 
@@ -39,36 +34,64 @@ class LoginView extends React.Component {
     })
   }
 
+  handleLogin( uid ) {
+    getUser( uid ).then(( snapshot ) => {
+      const user = snapshot.val()
+      this.props.updateCurrentUser( user )
+      this.props.history.push( '/map' )
+    })
+  }
+
+  renderErrorMsg() {
+    if ( !this.state.errorMsg ) return null
+
+    return (
+      <div className='error-msg small'>
+        {this.state.errorMsg}
+      </div>
+    )
+  }
+
   render () {
-    console.log( 'render' )
     return (
       <main id='login-view' className='view'>
-        <h1> Login </h1>
-        <form onSubmit={this.handleSubmit}>
-          <div className='form-group'>
-            <label>Email</label>
-            <input className='form-control' ref={( email ) => this.email = email} placeholder='Email'/>
+        <div className='content-wrapper'>
+          <div className='illustration'></div>
+          <h1> Login </h1>
+          <form onSubmit={this.handleSubmit}>
+            <input
+              type='email'
+              className='login-input email'
+              ref={( $e ) => this.email = $e}
+              placeholder='Email'
+            />
+            <div className='input-wrapper'>
+              <input
+                type='password'
+                className='login-input password'
+                ref={( $p ) => this.pw = $p}
+                placeholder='Password'
+              />
+              <div className='forgot-password small'>
+                Forgot?
+              </div>
+            </div>
+            {this.renderErrorMsg()}
+            <button type='submit' className='submit'>
+              Log In
+            </button>
+          </form>
+
+          <hr />
+
+          <button className='button facebook-login full-width' onClick={signInWithFacebook}>
+            or continue with Facebook
+          </button>
+
+          <div className='sign-up-instruction small'>
+            Don't have an account? <Link to='/signup'>Sign Up</Link>
           </div>
-          <div className='form-group'>
-            <label>Password</label>
-            <input type='password' className='form-control' placeholder='Password' ref={( pw ) => this.pw = pw} />
-          </div>
-          {
-            this.state.loginMessage &&
-             <div className='alert alert-danger' role='alert'>
-               <span className='glyphicon glyphicon-exclamation-sign' aria-hidden='true'></span>
-               <span className='sr-only'>Error:</span>
-               &nbsp;{this.state.loginMessage} <a href='#' onClick={this.resetPassword} className='alert-link'>Forgot Password?</a>
-             </div>
-          }
-          <button type='submit' className='btn btn-primary'>Login</button>
-          {
-            this.state.errorMsg &&
-           <div className='error'>
-             {this.state.errorMsg}
-           </div>
-          }
-        </form>
+        </div>
       </main>
     )
   }

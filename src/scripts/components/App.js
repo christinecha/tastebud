@@ -20,6 +20,11 @@ import { getFullScreenHeight } from '../lib/static-height'
 import { getCurrentUser, watchAuthState } from '../db/auth'
 import { getUser, saveUser, watchUser, createUserFromFacebookRedirect } from '../db/user'
 
+const FORCE_REDIRECT_PATHS = [
+  '/',
+  '/login',
+]
+
 class App extends React.Component {
   constructor ( props ) {
     super( props )
@@ -69,15 +74,19 @@ class App extends React.Component {
   }
 
   handleLogin ( user ) {
+    const { history } = this.props
     this.setState({ isLoading: false })
 
     if ( user.firstLogin ) {
-      this.props.history.push( `/users/${ user.uid }` )
+      history.push( `/users/${ user.uid }` )
       return
     }
 
-    if ( this.props.history.location.pathname !== '/' ) return
-    else this.props.history.push( '/map' )
+    const { location } = history
+    const { pathname } = location
+    if ( FORCE_REDIRECT_PATHS.indexOf( pathname ) < 0 ) return
+
+    history.push( '/map' )
   }
 
   handleAuthStateChange ( data ) {

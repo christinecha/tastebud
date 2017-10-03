@@ -1,0 +1,81 @@
+#login-view {
+  padding-top: 40px;
+
+  .illustration {
+    background-color: @light-gray;
+    width: 200px;
+    height: 200px;
+    margin: auto;
+  }
+
+  h1 {
+    margin: 20px auto;
+  }
+
+  .content-wrapper {
+    width: 85%;
+    margin: auto;
+  }
+
+  .input-wrapper {
+    position: relative;
+  }
+
+  .login-input {
+    width: 100%;
+    margin: 0;
+    border: 1px solid @light-gray;
+
+    &:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0px 1000px white inset;
+    }
+
+    &.email {
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+    }
+
+    &.password {
+      border-top: none;
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+    }
+  }
+
+  .forgot-password {
+    position: absolute;
+    right: 20px;
+    top: 36%;
+  }
+
+  .error-msg {
+    padding: 10px 0;
+    margin-top: 10px;
+    background-color: @light-gray;
+  }
+
+  .submit {
+    width: 100%;
+    margin-top: 30px;
+  }
+
+  hr {
+    border: none;
+    border-bottom: 1px solid @light-gray;
+    margin: 25px auto;
+  }
+
+  .facebook-login {
+    background-color: #39579A;
+  }
+
+  .sign-up-instruction {
+    margin-top: 30px;
+
+    a {
+      font-weight: bold;
+      color: @dark-gray;
+      cursor: pointer;
+    }
+  }
+}
