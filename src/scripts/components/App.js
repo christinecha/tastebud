@@ -9,8 +9,8 @@ import HomeView from './HomeView'
 import SampleComponent from './SampleComponent'
 import MapViewContainer from './containers/MapViewContainer'
 import LoginViewContainer from './containers/LoginViewContainer'
-import SavePlaceView from './SavePlaceView'
-import SearchView from './SearchView'
+import SearchViewContainer from './containers/SearchViewContainer'
+import UserViewContainer from './containers/UserViewContainer'
 import SignupView from './SignupView/index'
 import UserView from './UserView/index'
 import FollowersView from './FollowersView'
@@ -34,7 +34,6 @@ class App extends React.Component {
       contentHeight: getFullScreenHeight() + 'px',
     }
 
-    this.handleResize = this.handleResize.bind( this )
     this.handleLogin = this.handleLogin.bind( this )
     this.handleAuthStateChange = this.handleAuthStateChange.bind( this )
   }
@@ -67,10 +66,6 @@ class App extends React.Component {
   componentWillUnmount () {
     this.isUnmounting = true
     window.removeEventListener( 'resize', this.handleResize )
-  }
-
-  handleResize () {
-    // this.setState({ contentHeight: getFullScreenHeight() + 'px' })
   }
 
   handleLogin ( user ) {
@@ -154,9 +149,8 @@ class App extends React.Component {
           <Route path='/sample' component={SampleComponent} />
           <Route path='/login' component={LoginViewContainer} />
           <Route path='/signup' component={SignupView} />
-          <PropsRoute path='/save-place' component={SavePlaceView} {...this.props} />
-          <PropsRoute path='/search' component={SearchView} {...this.props} />
-          <PropsRoute exact path='/users/:uid' component={UserView} {...this.props} />
+          <Route path='/search' component={SearchViewContainer} />
+          <Route exact path='/users/:uid' component={UserViewContainer} />
           <PropsRoute path='/users/:uid/followers' component={FollowersView} {...this.props} />
           <PropsRoute path='/users/:uid/following' component={FollowingView} {...this.props} />
           <Redirect from='*' to='/' />

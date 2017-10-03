@@ -22,6 +22,7 @@ const mapStyle = [
   },
   {
     'featureType': 'landscape',
+    'elementType': 'all',
     'stylers': [
       {
         'color': '#f2f2f2',
@@ -30,6 +31,7 @@ const mapStyle = [
   },
   {
     'featureType': 'poi',
+    'elementType': 'all',
     'stylers': [
       {
         'visibility': 'off',
@@ -41,15 +43,16 @@ const mapStyle = [
     'elementType': 'geometry.fill',
     'stylers': [
       {
-        'color': '#7e8281',
+        'visibility': 'simplified',
       },
       {
-        'visibility': 'simplified',
+        'color': '#7e8281',
       },
     ],
   },
   {
     'featureType': 'road',
+    'elementType': 'all',
     'stylers': [
       {
         'saturation': -100,
@@ -70,6 +73,7 @@ const mapStyle = [
   },
   {
     'featureType': 'road.highway',
+    'elementType': 'all',
     'stylers': [
       {
         'visibility': 'simplified',
@@ -78,6 +82,7 @@ const mapStyle = [
   },
   {
     'featureType': 'transit',
+    'elementType': 'all',
     'stylers': [
       {
         'visibility': 'off',
@@ -86,12 +91,13 @@ const mapStyle = [
   },
   {
     'featureType': 'water',
+    'elementType': 'all',
     'stylers': [
       {
-        'color': '#46bcec',
+        'visibility': 'on',
       },
       {
-        'visibility': 'on',
+        'color': '#46bcec',
       },
     ],
   },
@@ -113,6 +119,51 @@ const mapStyle = [
     'stylers': [
       {
         'saturation': -80,
+      },
+    ],
+  },
+  {
+    'featureType': 'administrative.locality',
+    'elementType': 'labels.text.fill',
+    'stylers': [
+      {
+        'color': '#000000',
+      },
+      {
+        'lightness': 34,
+      },
+    ],
+  },
+  {
+    'featureType': 'poi.park',
+    'elementType': 'geometry.fill',
+    'stylers': [
+      {
+        'visibility': 'on',
+      },
+      {
+        'color': '#cbe6a3',
+      },
+    ],
+  },
+  {
+    'featureType': 'administrative.locality',
+    'elementType': 'all',
+    'stylers': [
+      {
+        'visibility': 'off',
+      },
+      {
+        'invert_lightness': false,
+      },
+    ],
+  },
+  {
+    'featureType': 'administrative.neighborhood',
+    'elementType': 'all',
+    'stylers': [
+      {
+        'visibility': 'off',
       },
     ],
   },

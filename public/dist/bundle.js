@@ -29310,13 +29310,13 @@ var _LoginViewContainer = __webpack_require__(507);
 
 var _LoginViewContainer2 = _interopRequireDefault(_LoginViewContainer);
 
-var _SavePlaceView = __webpack_require__(254);
+var _SearchViewContainer = __webpack_require__(508);
 
-var _SavePlaceView2 = _interopRequireDefault(_SavePlaceView);
+var _SearchViewContainer2 = _interopRequireDefault(_SearchViewContainer);
 
-var _SearchView = __webpack_require__(256);
+var _UserViewContainer = __webpack_require__(509);
 
-var _SearchView2 = _interopRequireDefault(_SearchView);
+var _UserViewContainer2 = _interopRequireDefault(_UserViewContainer);
 
 var _index3 = __webpack_require__(258);
 
@@ -29363,7 +29363,6 @@ var App = function (_React$Component) {
       contentHeight: (0, _staticHeight.getFullScreenHeight)() + 'px'
     };
 
-    _this.handleResize = _this.handleResize.bind(_this);
     _this.handleLogin = _this.handleLogin.bind(_this);
     _this.handleAuthStateChange = _this.handleAuthStateChange.bind(_this);
     return _this;
@@ -29407,11 +29406,6 @@ var App = function (_React$Component) {
     value: function componentWillUnmount() {
       this.isUnmounting = true;
       window.removeEventListener('resize', this.handleResize);
-    }
-  }, {
-    key: 'handleResize',
-    value: function handleResize() {
-      // this.setState({ contentHeight: getFullScreenHeight() + 'px' })
     }
   }, {
     key: 'handleLogin',
@@ -29514,9 +29508,8 @@ var App = function (_React$Component) {
           _react2.default.createElement(_reactRouterDom.Route, { path: '/sample', component: _SampleComponent2.default }),
           _react2.default.createElement(_reactRouterDom.Route, { path: '/login', component: _LoginViewContainer2.default }),
           _react2.default.createElement(_reactRouterDom.Route, { path: '/signup', component: _index4.default }),
-          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/save-place', component: _SavePlaceView2.default }, this.props)),
-          _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/search', component: _SearchView2.default }, this.props)),
-          _react2.default.createElement(_PropsRoute2.default, _extends({ exact: true, path: '/users/:uid', component: _index6.default }, this.props)),
+          _react2.default.createElement(_reactRouterDom.Route, { path: '/search', component: _SearchViewContainer2.default }),
+          _react2.default.createElement(_reactRouterDom.Route, { exact: true, path: '/users/:uid', component: _UserViewContainer2.default }),
           _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid/followers', component: _FollowersView2.default }, this.props)),
           _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid/following', component: _FollowingView2.default }, this.props)),
           _react2.default.createElement(_reactRouterDom.Redirect, { from: '*', to: '/' })
@@ -30317,6 +30310,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var MarkerClusterer = window.MarkerClusterer;
+
 var MapView = function (_React$Component) {
   _inherits(MapView, _React$Component);
 
@@ -30336,9 +30331,16 @@ var MapView = function (_React$Component) {
   _createClass(MapView, [{
     key: 'componentDidMount',
     value: function componentDidMount() {
+      var _this2 = this;
+
       this.generateMap();
       this.renderMap();
       this.renderCurrentLocationMarker();
+
+      this.$map.addEventListener('click', function (e) {
+        if (e.target.tagName === 'IMG') return;
+        _this2.setState({ activePlaceIndex: null });
+      });
     }
   }, {
     key: 'componentWillUnmount',
@@ -30348,7 +30350,7 @@ var MapView = function (_React$Component) {
   }, {
     key: 'renderMap',
     value: function renderMap() {
-      var _this2 = this;
+      var _this3 = this;
 
       var currentUser = this.props.currentUser;
 
@@ -30359,7 +30361,7 @@ var MapView = function (_React$Component) {
         var placeIds = (0, _lodash.uniq)([].concat.apply([], _placeIds));
 
         (0, _place.getPlacesWithFollowerInfo)(placeIds, currentUser).then(function (places) {
-          _this2.updatePlaceData(places);
+          _this3.updatePlaceData(places);
         });
       });
     }
@@ -30370,37 +30372,52 @@ var MapView = function (_React$Component) {
 
       this.setState({ places: places });
       this.renderPlaceMarkers();
-      this.renderMarkerClusterer();
+      // this.renderMarkerClusterer()
     }
   }, {
     key: 'renderMarkerClusterer',
     value: function renderMarkerClusterer() {
-      var markerCluster = new MarkerClusterer(this.map, this.state.markers, {
-        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-      });
+      var options = {
+        styles: [{
+          textColor: 'white',
+          url: '/assets/images/marker-black.svg',
+          height: 40,
+          width: 40
+        }]
+      };
+
+      this.markerClusterer = new MarkerClusterer(this.map, this.state.markers, options);
     }
   }, {
     key: 'renderPlaceMarkers',
     value: function renderPlaceMarkers() {
-      var _this3 = this;
+      var _this4 = this;
 
       var markers = this.state.places.map(function (place, i) {
         // Safety net for dead data
         if (!place) return;
+
+        var placeMarkerImg = _mapMarkers.placeMarkers.friends;
+
+        var currentUser = _this4.props.currentUser;
+
+        if (currentUser && currentUser.places.indexOf(place.id) > -1) {
+          placeMarkerImg = _mapMarkers.placeMarkers.yours;
+        }
 
         var marker = new google.maps.Marker({
           position: {
             lat: place.lat,
             lng: place.lng
           },
-          icon: _mapMarkers.genericImage,
+          icon: placeMarkerImg,
           label: ' '
         });
 
-        marker.setMap(_this3.map);
+        marker.setMap(_this4.map);
         marker.addListener('click', function () {
-          _this3.map.setCenter(marker.getPosition());
-          _this3.setState({ activePlaceIndex: i });
+          _this4.map.panTo(marker.getPosition());
+          _this4.setState({ activePlaceIndex: i });
         });
 
         return marker;
@@ -30438,19 +30455,46 @@ var MapView = function (_React$Component) {
       if (activePlaceIndex === null) return null;
 
       return _react2.default.createElement(_PlacePreview2.default, {
-        activePlace: places[activePlaceIndex]
+        activePlace: places[activePlaceIndex],
+        currentLocation: this.props.currentLocation
       });
     }
   }, {
     key: 'render',
     value: function render() {
-      var _this4 = this;
+      var _this5 = this;
 
       return _react2.default.createElement(
         'main',
         { id: 'map-view', className: 'view' },
+        _react2.default.createElement(
+          'div',
+          { className: 'map-tools' },
+          _react2.default.createElement(
+            'div',
+            { className: 'reference' },
+            _react2.default.createElement(
+              'div',
+              { className: 'type label yours' },
+              _react2.default.createElement('div', { className: 'icon' }),
+              'Yours'
+            ),
+            _react2.default.createElement(
+              'div',
+              { className: 'type label friends' },
+              _react2.default.createElement('div', { className: 'icon' }),
+              'Friends'
+            ),
+            _react2.default.createElement(
+              'div',
+              { className: 'type label popular' },
+              _react2.default.createElement('div', { className: 'icon' }),
+              'Popular'
+            )
+          )
+        ),
         _react2.default.createElement('div', { id: 'google-maps', ref: function ref($map) {
-            return _this4.$map = $map;
+            return _this5.$map = $map;
           } }),
         this.renderPlacePreview()
       );
@@ -30754,136 +30798,7 @@ var SampleComponent = function (_React$Component) {
 exports.default = SampleComponent;
 
 /***/ }),
-/* 254 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = __webpack_require__(3);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _googleMaps = __webpack_require__(358);
-
-var _googleMaps2 = _interopRequireDefault(_googleMaps);
-
-var _locationSchema = __webpack_require__(130);
-
-var _locationSchema2 = _interopRequireDefault(_locationSchema);
-
-var _place = __webpack_require__(48);
-
-var _user = __webpack_require__(13);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var SavePlaceView = function (_React$Component) {
-  _inherits(SavePlaceView, _React$Component);
-
-  function SavePlaceView(props) {
-    _classCallCheck(this, SavePlaceView);
-
-    var _this = _possibleConstructorReturn(this, (SavePlaceView.__proto__ || Object.getPrototypeOf(SavePlaceView)).call(this, props));
-
-    _this.handleInputChange = _this.handleInputChange.bind(_this);
-
-    _this.state = Object.assign({}, _locationSchema2.default);
-    _this.state.searchQuery = '';
-    return _this;
-  }
-
-  _createClass(SavePlaceView, [{
-    key: 'getSearchResults',
-    value: function getSearchResults() {
-      var _this2 = this;
-
-      var request = {
-        query: this.state.searchQuery,
-        location: { lat: 40.725493, lng: -74.004167 },
-        type: ['restaurant']
-      };
-
-      var service = new google.maps.places.PlacesService(this.$places);
-      service.textSearch(request, function (places, status) {
-        if (status !== google.maps.places.PlacesServiceStatus.OK) return;
-
-        var place = places[0];
-        var placeData = {
-          name: place.name,
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng(),
-          pricePoint: place.price_level || 0,
-          rating: place.rating,
-          types: place.types,
-          vicinity: place.vicinity || ''
-        };
-
-        (0, _place.newPlace)(placeData).then(function (placeId) {
-          (0, _place.addUserToPlace)(placeId, _this2.props.currentUser.uid);
-          var newPlaces = _this2.props.currentUser.places || [];
-          newPlaces.push(placeId);
-          (0, _user.updateUser)(_this2.props.currentUser.uid, { places: newPlaces }).then(function () {
-            _this2.props.history.push('/users/' + _this2.props.currentUser.uid);
-          });
-        });
-      });
-    }
-  }, {
-    key: 'handleInputChange',
-    value: function handleInputChange(e) {
-      var newState = {};
-      newState[e.target.name] = e.target.value;
-      this.setState(newState);
-    }
-  }, {
-    key: 'handleSubmit',
-    value: function handleSubmit() {
-      this.getSearchResults();
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-      var _this3 = this;
-
-      var searchQuery = this.state.searchQuery;
-
-      return _react2.default.createElement(
-        'div',
-        null,
-        _react2.default.createElement('div', { className: 'places', ref: function ref($l) {
-            return _this3.$places = $l;
-          } }),
-        _react2.default.createElement('input', { name: 'searchQuery', type: 'text', value: searchQuery, onChange: this.handleInputChange }),
-        _react2.default.createElement(
-          'button',
-          { onClick: function onClick() {
-              return _this3.handleSubmit();
-            } },
-          'Submit Changes'
-        )
-      );
-    }
-  }]);
-
-  return SavePlaceView;
-}(_react2.default.Component);
-
-exports.default = SavePlaceView;
-
-/***/ }),
+/* 254 */,
 /* 255 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -31636,7 +31551,7 @@ var UserView = function (_React$Component) {
   _createClass(UserView, [{
     key: 'componentDidMount',
     value: function componentDidMount() {
-      var userId = this.props.computedMatch.params.uid;
+      var userId = this.props.match.params.uid;
       this.firstLoad = true;
 
       (0, _user.watchUser)(userId, this.handleWatchUser);
@@ -31661,7 +31576,7 @@ var UserView = function (_React$Component) {
   }, {
     key: 'componentWillUnmount',
     value: function componentWillUnmount() {
-      var userId = this.props.computedMatch.params.uid;
+      var userId = this.props.match.params.uid;
       this.isUnmounting = true;
       (0, _user.unwatchUser)(userId, this.handleWatchUser);
     }
@@ -31913,7 +31828,7 @@ var mapConfig = {
   mapTypeControl: false,
   fullScreenControl: false,
   styles: _mapStyle2.default,
-  zoom: 12
+  zoom: 15
 };
 
 exports.default = mapConfig;
@@ -31928,14 +31843,20 @@ exports.default = mapConfig;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var genericImage = exports.genericImage = {
-  url: '/assets/images/marker-black.svg',
-  scaledSize: new google.maps.Size(22, 32)
+var placeMarkers = exports.placeMarkers = {
+  yours: {
+    url: '/assets/images/marker-black.svg',
+    scaledSize: new google.maps.Size(20, 30)
+  },
+  friends: {
+    url: '/assets/images/marker-white.svg',
+    scaledSize: new google.maps.Size(20, 30)
+  }
 };
 
 var currentLocationImage = exports.currentLocationImage = {
   url: '/assets/images/marker-blue.svg',
-  scaledSize: new google.maps.Size(22, 32)
+  scaledSize: new google.maps.Size(20, 30)
 };
 
 /***/ }),
@@ -31964,11 +31885,13 @@ var mapStyle = [{
   }]
 }, {
   'featureType': 'landscape',
+  'elementType': 'all',
   'stylers': [{
     'color': '#f2f2f2'
   }]
 }, {
   'featureType': 'poi',
+  'elementType': 'all',
   'stylers': [{
     'visibility': 'off'
   }]
@@ -31976,12 +31899,13 @@ var mapStyle = [{
   'featureType': 'poi.park',
   'elementType': 'geometry.fill',
   'stylers': [{
-    'color': '#7e8281'
-  }, {
     'visibility': 'simplified'
+  }, {
+    'color': '#7e8281'
   }]
 }, {
   'featureType': 'road',
+  'elementType': 'all',
   'stylers': [{
     'saturation': -100
   }, {
@@ -31995,20 +31919,23 @@ var mapStyle = [{
   }]
 }, {
   'featureType': 'road.highway',
+  'elementType': 'all',
   'stylers': [{
     'visibility': 'simplified'
   }]
 }, {
   'featureType': 'transit',
+  'elementType': 'all',
   'stylers': [{
     'visibility': 'off'
   }]
 }, {
   'featureType': 'water',
+  'elementType': 'all',
   'stylers': [{
-    'color': '#46bcec'
-  }, {
     'visibility': 'on'
+  }, {
+    'color': '#46bcec'
   }]
 }, {
   'featureType': 'water',
@@ -32023,6 +31950,36 @@ var mapStyle = [{
   'elementType': 'labels.text.fill',
   'stylers': [{
     'saturation': -80
+  }]
+}, {
+  'featureType': 'administrative.locality',
+  'elementType': 'labels.text.fill',
+  'stylers': [{
+    'color': '#000000'
+  }, {
+    'lightness': 34
+  }]
+}, {
+  'featureType': 'poi.park',
+  'elementType': 'geometry.fill',
+  'stylers': [{
+    'visibility': 'on'
+  }, {
+    'color': '#cbe6a3'
+  }]
+}, {
+  'featureType': 'administrative.locality',
+  'elementType': 'all',
+  'stylers': [{
+    'visibility': 'off'
+  }, {
+    'invert_lightness': false
+  }]
+}, {
+  'featureType': 'administrative.neighborhood',
+  'elementType': 'all',
+  'stylers': [{
+    'visibility': 'off'
   }]
 }];
 
@@ -33197,7 +33154,7 @@ exports = module.exports = __webpack_require__(276)();
 
 
 // module
-exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 100%;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\n.small {\n  font-size: 12px;\n  color: #aaaaaa;\n  text-transform: none;\n}\n.content-wrapper {\n  position: relative;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\ninput:focus {\n  outline: none;\n}\n.view {\n  padding-bottom: 60px;\n  min-height: calc(100% - 60px);\n  box-sizing: border-box;\n}\n.view-content {\n  width: 85%;\n  margin: auto;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 100%;\n  height: 60px;\n  padding: 15px;\n  box-sizing: border-box;\n  z-index: 1;\n  background-color: #fff;\n  display: flex;\n  justify-content: space-around;\n  background-color: #f7f7f7;\n}\n#header .nav-item {\n  width: 25%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-right: 1px solid #aaaaaa;\n}\n#header .nav-item:last-child {\n  border: none;\n}\n#header .nav-item .label {\n  font-size: 8px;\n}\n#home-view {\n  padding-top: 50px;\n}\n#home-view .onboarding-carousel {\n  margin: 30px 0;\n}\n#home-view .onboarding-carousel .slides-wrapper {\n  position: relative;\n  width: 200px;\n  height: 200px;\n  margin: auto;\n}\n#home-view .onboarding-carousel .slide {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n  opacity: 0;\n  transition: opacity 300ms ease-in-out;\n}\n#home-view .onboarding-carousel .slide.is-active {\n  opacity: 1;\n}\n#home-view .onboarding-carousel .slide:nth-child(odd) {\n  background-color: #f7f7f7;\n}\n#home-view .onboarding-carousel .slide:nth-child(even) {\n  background-color: #aaaaaa;\n}\n#home-view .onboarding-carousel .indicators-wrapper {\n  height: 5px;\n  padding: 10px 0;\n}\n#home-view .onboarding-carousel .indicator {\n  display: inline-block;\n  width: 5px;\n  height: 5px;\n  border-radius: 100%;\n  margin: 0 5px;\n  background-color: #aaaaaa;\n  transition: background-color 300ms ease-in-out;\n}\n#home-view .onboarding-carousel .indicator.is-active {\n  background-color: #3c3c3c;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#home-view hr {\n  margin: 20px 40%;\n  border: 1px solid #f7f7f7;\n}\n#home-view .log-in-prompt {\n  margin-top: 30px;\n}\n#home-view .log-in-prompt .log-in {\n  margin-left: 0.5ch;\n  color: #3c3c3c;\n  cursor: pointer;\n}\n#loading-view {\n  display: flex;\n  flex-direction: column;\n  align-content: center;\n  justify-content: center;\n}\n#login-view {\n  padding-top: 40px;\n}\n#login-view .illustration {\n  background-color: #f7f7f7;\n  width: 200px;\n  height: 200px;\n  margin: auto;\n}\n#login-view h1 {\n  margin: 20px auto;\n}\n#login-view .content-wrapper {\n  width: 85%;\n  margin: auto;\n}\n#login-view .input-wrapper {\n  position: relative;\n}\n#login-view .login-input {\n  width: 100%;\n  margin: 0;\n  border: 1px solid #f7f7f7;\n}\n#login-view .login-input:-webkit-autofill {\n  -webkit-box-shadow: 0 0 0px 1000px white inset;\n}\n#login-view .login-input.email {\n  border-top-left-radius: 5px;\n  border-top-right-radius: 5px;\n}\n#login-view .login-input.password {\n  border-top: none;\n  border-bottom-left-radius: 5px;\n  border-bottom-right-radius: 5px;\n}\n#login-view .forgot-password {\n  position: absolute;\n  right: 20px;\n  top: 36%;\n}\n#login-view .error-msg {\n  padding: 10px 0;\n  margin-top: 10px;\n  background-color: #f7f7f7;\n}\n#login-view .submit {\n  width: 100%;\n  margin-top: 30px;\n}\n#login-view hr {\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n  margin: 25px auto;\n}\n#login-view .facebook-login {\n  background-color: #39579A;\n}\n#login-view .sign-up-instruction {\n  margin-top: 30px;\n}\n#login-view .sign-up-instruction a {\n  font-weight: bold;\n  color: #3c3c3c;\n  cursor: pointer;\n}\n#map-view {\n  position: relative;\n  width: 100%;\n  height: calc(100% - 60px);\n  padding: 0;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n}\n#map-view .place-preview {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding: 10px;\n  box-sizing: border-box;\n}\n#map-view .place-preview .place-preview-content {\n  text-align: left;\n  background-color: #fff;\n  border-radius: 3px;\n  padding: 10px;\n}\n#map-view .place-preview .place-preview-content hr {\n  margin-top: 15px;\n  margin-bottom: 15px;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n.place-list {\n  padding: 20px;\n}\n.place-list .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n  display: flex;\n  align-items: center;\n}\n.place-list .info {\n  flex-grow: 1;\n}\n.place-list button {\n  width: 75px;\n}\n.place-list .delete {\n  width: 20px;\n  height: 20px;\n  background-image: url(/assets/images/x.svg);\n  opacity: 0.6;\n}\n#search-view {\n  display: flex;\n  flex-direction: column;\n}\n#search-view .search-input {\n  width: 100%;\n  margin: 0;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-options {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .search-options .option {\n  width: 50%;\n  padding: 5px;\n}\n#search-view .search-options .option:first-child {\n  border-right: 1px solid #f7f7f7;\n}\n#search-view .search-options .option[data-active=\"true\"] {\n  color: black;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n  margin: auto 0;\n}\n#search-view .search-results.has-results {\n  margin: 0 0;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n#signup-view .signup-form .input-wrapper {\n  position: relative;\n}\n#signup-view .signup-form .icon {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.user-list {\n  padding: 20px;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(217) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view {\n  padding-top: 20px;\n}\n#user-view .edit-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(217) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n", ""]);
+exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 100%;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\n.small {\n  font-size: 12px;\n  color: #aaaaaa;\n  text-transform: none;\n}\n.content-wrapper {\n  position: relative;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\ninput:focus {\n  outline: none;\n}\n.view {\n  padding-bottom: 60px;\n  min-height: calc(100% - 60px);\n  box-sizing: border-box;\n}\n.view-content {\n  width: 85%;\n  margin: auto;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 100%;\n  height: 60px;\n  padding: 15px;\n  box-sizing: border-box;\n  z-index: 1;\n  background-color: #fff;\n  display: flex;\n  justify-content: space-around;\n  background-color: #f7f7f7;\n}\n#header .nav-item {\n  width: 25%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-right: 1px solid #aaaaaa;\n}\n#header .nav-item:last-child {\n  border: none;\n}\n#header .nav-item .label {\n  font-size: 8px;\n}\n#home-view {\n  padding-top: 50px;\n}\n#home-view .onboarding-carousel {\n  margin: 30px 0;\n}\n#home-view .onboarding-carousel .slides-wrapper {\n  position: relative;\n  width: 200px;\n  height: 200px;\n  margin: auto;\n}\n#home-view .onboarding-carousel .slide {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n  opacity: 0;\n  transition: opacity 300ms ease-in-out;\n}\n#home-view .onboarding-carousel .slide.is-active {\n  opacity: 1;\n}\n#home-view .onboarding-carousel .slide:nth-child(odd) {\n  background-color: #f7f7f7;\n}\n#home-view .onboarding-carousel .slide:nth-child(even) {\n  background-color: #aaaaaa;\n}\n#home-view .onboarding-carousel .indicators-wrapper {\n  height: 5px;\n  padding: 10px 0;\n}\n#home-view .onboarding-carousel .indicator {\n  display: inline-block;\n  width: 5px;\n  height: 5px;\n  border-radius: 100%;\n  margin: 0 5px;\n  background-color: #aaaaaa;\n  transition: background-color 300ms ease-in-out;\n}\n#home-view .onboarding-carousel .indicator.is-active {\n  background-color: #3c3c3c;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#home-view hr {\n  margin: 20px 40%;\n  border: 1px solid #f7f7f7;\n}\n#home-view .log-in-prompt {\n  margin-top: 30px;\n}\n#home-view .log-in-prompt .log-in {\n  margin-left: 0.5ch;\n  color: #3c3c3c;\n  cursor: pointer;\n}\n#loading-view {\n  display: flex;\n  flex-direction: column;\n  align-content: center;\n  justify-content: center;\n}\n#login-view {\n  padding-top: 40px;\n}\n#login-view .illustration {\n  background-color: #f7f7f7;\n  width: 200px;\n  height: 200px;\n  margin: auto;\n}\n#login-view h1 {\n  margin: 20px auto;\n}\n#login-view .content-wrapper {\n  width: 85%;\n  margin: auto;\n}\n#login-view .input-wrapper {\n  position: relative;\n}\n#login-view .login-input {\n  width: 100%;\n  margin: 0;\n  border: 1px solid #f7f7f7;\n}\n#login-view .login-input:-webkit-autofill {\n  -webkit-box-shadow: 0 0 0px 1000px white inset;\n}\n#login-view .login-input.email {\n  border-top-left-radius: 5px;\n  border-top-right-radius: 5px;\n}\n#login-view .login-input.password {\n  border-top: none;\n  border-bottom-left-radius: 5px;\n  border-bottom-right-radius: 5px;\n}\n#login-view .forgot-password {\n  position: absolute;\n  right: 20px;\n  top: 36%;\n}\n#login-view .error-msg {\n  padding: 10px 0;\n  margin-top: 10px;\n  background-color: #f7f7f7;\n}\n#login-view .submit {\n  width: 100%;\n  margin-top: 30px;\n}\n#login-view hr {\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n  margin: 25px auto;\n}\n#login-view .facebook-login {\n  background-color: #39579A;\n}\n#login-view .sign-up-instruction {\n  margin-top: 30px;\n}\n#login-view .sign-up-instruction a {\n  font-weight: bold;\n  color: #3c3c3c;\n  cursor: pointer;\n}\n#map-view {\n  position: relative;\n  width: 100%;\n  height: calc(100% - 60px);\n  padding: 0;\n}\n#map-view .map-tools {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  background-color: white;\n  z-index: 1;\n}\n#map-view .map-tools .reference {\n  border-top: 1px solid #f7f7f7;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px 0;\n}\n#map-view .map-tools .reference .type {\n  width: 25%;\n  border-right: 1px solid #f7f7f7;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#map-view .map-tools .reference .type:last-of-type {\n  border-right: none;\n}\n#map-view .map-tools .reference .type.yours .icon {\n  background-color: black;\n}\n#map-view .map-tools .reference .type.friends .icon {\n  background-color: white;\n}\n#map-view .map-tools .reference .type.popular .icon {\n  background-color: #aaaaaa;\n}\n#map-view .map-tools .reference .type .icon {\n  width: 11px;\n  height: 11px;\n  border-radius: 100%;\n  border: 1px solid #f7f7f7;\n  display: inline-block;\n  margin-right: 1ch;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n}\n#map-view .place-preview {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding: 10px;\n  box-sizing: border-box;\n}\n#map-view .place-preview .place-preview-content {\n  text-align: left;\n  background-color: #fff;\n  border-radius: 3px;\n  padding: 10px;\n}\n#map-view .place-preview .place-preview-content hr {\n  margin-top: 15px;\n  margin-bottom: 15px;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n.place-list {\n  padding: 20px;\n}\n.place-list .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n  display: flex;\n  align-items: center;\n}\n.place-list .info {\n  flex-grow: 1;\n}\n.place-list button {\n  width: 75px;\n}\n.place-list .delete {\n  width: 20px;\n  height: 20px;\n  background-image: url(/assets/images/x.svg);\n  opacity: 0.6;\n}\n#search-view {\n  display: flex;\n  flex-direction: column;\n}\n#search-view .search-input {\n  width: 100%;\n  margin: 0;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-options {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .search-options .option {\n  width: 50%;\n  padding: 5px;\n}\n#search-view .search-options .option:first-child {\n  border-right: 1px solid #f7f7f7;\n}\n#search-view .search-options .option[data-active=\"true\"] {\n  color: black;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n  margin: auto 0;\n}\n#search-view .search-results.has-results {\n  margin: 0 0;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n#signup-view .signup-form .input-wrapper {\n  position: relative;\n}\n#signup-view .signup-form .icon {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.user-list {\n  padding: 20px;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(217) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view {\n  padding-top: 20px;\n}\n#user-view .edit-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(217) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n", ""]);
 
 // exports
 
@@ -45750,235 +45707,7 @@ var querystringDecode = exports.querystringDecode = function querystringDecode(q
 
 
 /***/ }),
-/* 358 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(root, factory) {
-
-	if (root === null) {
-		throw new Error('Google-maps package can be used only in browser');
-	}
-
-	if (true) {
-		!(__WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) :
-				__WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	} else if (typeof exports === 'object') {
-		module.exports = factory();
-	} else {
-		root.GoogleMapsLoader = factory();
-	}
-
-})(typeof window !== 'undefined' ? window : null, function() {
-
-
-	'use strict';
-
-
-	var googleVersion = '3.18';
-
-	var script = null;
-
-	var google = null;
-
-	var loading = false;
-
-	var callbacks = [];
-
-	var onLoadEvents = [];
-
-	var originalCreateLoaderMethod = null;
-
-
-	var GoogleMapsLoader = {};
-
-
-	GoogleMapsLoader.URL = 'https://maps.googleapis.com/maps/api/js';
-
-	GoogleMapsLoader.KEY = null;
-
-	GoogleMapsLoader.LIBRARIES = [];
-
-	GoogleMapsLoader.CLIENT = null;
-
-	GoogleMapsLoader.CHANNEL = null;
-
-	GoogleMapsLoader.LANGUAGE = null;
-
-	GoogleMapsLoader.REGION = null;
-
-	GoogleMapsLoader.VERSION = googleVersion;
-
-	GoogleMapsLoader.WINDOW_CALLBACK_NAME = '__google_maps_api_provider_initializator__';
-
-
-	GoogleMapsLoader._googleMockApiObject = {};
-
-
-	GoogleMapsLoader.load = function(fn) {
-		if (google === null) {
-			if (loading === true) {
-				if (fn) {
-					callbacks.push(fn);
-				}
-			} else {
-				loading = true;
-
-				window[GoogleMapsLoader.WINDOW_CALLBACK_NAME] = function() {
-					ready(fn);
-				};
-
-				GoogleMapsLoader.createLoader();
-			}
-		} else if (fn) {
-			fn(google);
-		}
-	};
-
-
-	GoogleMapsLoader.createLoader = function() {
-		script = document.createElement('script');
-		script.type = 'text/javascript';
-		script.src = GoogleMapsLoader.createUrl();
-
-		document.body.appendChild(script);
-	};
-
-
-	GoogleMapsLoader.isLoaded = function() {
-		return google !== null;
-	};
-
-
-	GoogleMapsLoader.createUrl = function() {
-		var url = GoogleMapsLoader.URL;
-
-		url += '?callback=' + GoogleMapsLoader.WINDOW_CALLBACK_NAME;
-
-		if (GoogleMapsLoader.KEY) {
-			url += '&key=' + GoogleMapsLoader.KEY;
-		}
-
-		if (GoogleMapsLoader.LIBRARIES.length > 0) {
-			url += '&libraries=' + GoogleMapsLoader.LIBRARIES.join(',');
-		}
-
-		if (GoogleMapsLoader.CLIENT) {
-			url += '&client=' + GoogleMapsLoader.CLIENT + '&v=' + GoogleMapsLoader.VERSION;
-		}
-
-		if (GoogleMapsLoader.CHANNEL) {
-			url += '&channel=' + GoogleMapsLoader.CHANNEL;
-		}
-
-		if (GoogleMapsLoader.LANGUAGE) {
-			url += '&language=' + GoogleMapsLoader.LANGUAGE;
-		}
-
-		if (GoogleMapsLoader.REGION) {
-			url += '&region=' + GoogleMapsLoader.REGION;
-		}
-
-		return url;
-	};
-
-
-	GoogleMapsLoader.release = function(fn) {
-		var release = function() {
-			GoogleMapsLoader.KEY = null;
-			GoogleMapsLoader.LIBRARIES = [];
-			GoogleMapsLoader.CLIENT = null;
-			GoogleMapsLoader.CHANNEL = null;
-			GoogleMapsLoader.LANGUAGE = null;
-			GoogleMapsLoader.REGION = null;
-			GoogleMapsLoader.VERSION = googleVersion;
-
-			google = null;
-			loading = false;
-			callbacks = [];
-			onLoadEvents = [];
-
-			if (typeof window.google !== 'undefined') {
-				delete window.google;
-			}
-
-			if (typeof window[GoogleMapsLoader.WINDOW_CALLBACK_NAME] !== 'undefined') {
-				delete window[GoogleMapsLoader.WINDOW_CALLBACK_NAME];
-			}
-
-			if (originalCreateLoaderMethod !== null) {
-				GoogleMapsLoader.createLoader = originalCreateLoaderMethod;
-				originalCreateLoaderMethod = null;
-			}
-
-			if (script !== null) {
-				script.parentElement.removeChild(script);
-				script = null;
-			}
-
-			if (fn) {
-				fn();
-			}
-		};
-
-		if (loading) {
-			GoogleMapsLoader.load(function() {
-				release();
-			});
-		} else {
-			release();
-		}
-	};
-
-
-	GoogleMapsLoader.onLoad = function(fn) {
-		onLoadEvents.push(fn);
-	};
-
-
-	GoogleMapsLoader.makeMock = function() {
-		originalCreateLoaderMethod = GoogleMapsLoader.createLoader;
-
-		GoogleMapsLoader.createLoader = function() {
-			window.google = GoogleMapsLoader._googleMockApiObject;
-			window[GoogleMapsLoader.WINDOW_CALLBACK_NAME]();
-		};
-	};
-
-
-	var ready = function(fn) {
-		var i;
-
-		loading = false;
-
-		if (google === null) {
-			google = window.google;
-		}
-
-		for (i = 0; i < onLoadEvents.length; i++) {
-			onLoadEvents[i](google);
-		}
-
-		if (fn) {
-			fn(google);
-		}
-
-		for (i = 0; i < callbacks.length; i++) {
-			callbacks[i](google);
-		}
-
-		callbacks = [];
-	};
-
-
-	return GoogleMapsLoader;
-
-});
-
-
-/***/ }),
+/* 358 */,
 /* 359 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -81374,6 +81103,74 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 var LoginViewContainer = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(_LoginView2.default);
 
 exports.default = LoginViewContainer;
+
+/***/ }),
+/* 508 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _reactRedux = __webpack_require__(121);
+
+var _SearchView = __webpack_require__(256);
+
+var _SearchView2 = _interopRequireDefault(_SearchView);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var mapStateToProps = function mapStateToProps(state) {
+  return {
+    currentUser: state.currentUser,
+    routing: state.routing,
+    currentLocation: {
+      lat: state.currentLocation.lat,
+      lng: state.currentLocation.lng
+    }
+  };
+};
+
+var SearchViewContainer = (0, _reactRedux.connect)(mapStateToProps)(_SearchView2.default);
+
+exports.default = SearchViewContainer;
+
+/***/ }),
+/* 509 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _reactRedux = __webpack_require__(121);
+
+var _UserView = __webpack_require__(260);
+
+var _UserView2 = _interopRequireDefault(_UserView);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var mapStateToProps = function mapStateToProps(state) {
+  return {
+    currentUser: state.currentUser,
+    routing: state.routing,
+    currentLocation: {
+      lat: state.currentLocation.lat,
+      lng: state.currentLocation.lng
+    }
+  };
+};
+
+var UserViewContainer = (0, _reactRedux.connect)(mapStateToProps)(_UserView2.default);
+
+exports.default = UserViewContainer;
 
 /***/ })
 /******/ ]);

@@ -23,7 +23,7 @@ class UserView extends React.Component {
   }
 
   componentDidMount () {
-    const userId = this.props.computedMatch.params.uid
+    const userId = this.props.match.params.uid
     this.firstLoad = true
 
     watchUser( userId, this.handleWatchUser )
@@ -45,7 +45,7 @@ class UserView extends React.Component {
   }
 
   componentWillUnmount () {
-    const userId = this.props.computedMatch.params.uid
+    const userId = this.props.match.params.uid
     this.isUnmounting = true
     unwatchUser( userId, this.handleWatchUser )
   }

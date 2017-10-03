@@ -8,8 +8,10 @@ import PlacePreview from './PlacePreview'
 import { getPlacesWithFollowerInfo, getPlaceIdsFromUsers } from '../../db/place'
 import { getUser } from '../../db/user'
 
-import { genericImage, currentLocationImage } from '../../constants/map-markers'
+import { placeMarkers, currentLocationImage } from '../../constants/map-markers'
 import mapConfig from '../../constants/map-config'
+
+const MarkerClusterer = window.MarkerClusterer
 
 class MapView extends React.Component {
   constructor ( props ) {
@@ -26,6 +28,11 @@ class MapView extends React.Component {
     this.generateMap()
     this.renderMap()
     this.renderCurrentLocationMarker()
+
+    this.$map.addEventListener( 'click', ( e ) => {
+      if ( e.target.tagName === 'IMG' ) return
+      this.setState({ activePlaceIndex: null })
+    })
   }
 
   componentWillUnmount () {
@@ -53,16 +60,25 @@ class MapView extends React.Component {
 
     this.setState({ places: places })
     this.renderPlaceMarkers()
-    this.renderMarkerClusterer()
+    // this.renderMarkerClusterer()
   }
 
   renderMarkerClusterer () {
-    const markerCluster = new MarkerClusterer(
+    const options = {
+      styles: [
+        {
+          textColor: 'white',
+          url: '/assets/images/marker-black.svg',
+          height: 40,
+          width: 40,
+        },
+      ],
+    }
+
+    this.markerClusterer = new MarkerClusterer(
       this.map,
       this.state.markers,
-      {
-        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m',
-      }
+      options
     )
   }
 
@@ -71,18 +87,25 @@ class MapView extends React.Component {
       // Safety net for dead data
       if ( !place ) return
 
+      let placeMarkerImg = placeMarkers.friends
+
+      const { currentUser } = this.props
+      if ( currentUser && currentUser.places.indexOf( place.id ) > -1 ) {
+        placeMarkerImg = placeMarkers.yours
+      }
+
       const marker = new google.maps.Marker({
         position: {
           lat: place.lat,
           lng: place.lng,
         },
-        icon: genericImage,
+        icon: placeMarkerImg,
         label: ' ',
       })
 
       marker.setMap( this.map )
       marker.addListener( 'click', () => {
-        this.map.setCenter( marker.getPosition())
+        this.map.panTo( marker.getPosition())
         this.setState({ activePlaceIndex: i })
       })
 
@@ -117,6 +140,7 @@ class MapView extends React.Component {
     return (
       <PlacePreview
         activePlace={places[ activePlaceIndex ]}
+        currentLocation={this.props.currentLocation}
       />
     )
   }
@@ -124,6 +148,22 @@ class MapView extends React.Component {
   render () {
     return (
       <main id='map-view' className='view'>
+        <div className='map-tools'>
+          <div className='reference'>
+            <div className='type label yours'>
+              <div className='icon'></div>
+              Yours
+            </div>
+            <div className='type label friends'>
+              <div className='icon'></div>
+              Friends
+            </div>
+            <div className='type label popular'>
+              <div className='icon'></div>
+              Popular
+            </div>
+          </div>
+        </div>
         <div id='google-maps' ref={( $map ) => this.$map = $map}></div>
         {this.renderPlacePreview()}
       </main>
