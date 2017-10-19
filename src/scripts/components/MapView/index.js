@@ -1,145 +1,39 @@
 import React from 'react'
-import axios from 'axios'
-import { uniq } from 'lodash'
-import 'js-marker-clusterer'
 
+import PlaceMap from './PlaceMap'
 import PlacePreview from './PlacePreview'
-
-import { getPlacesWithFollowerInfo, getPlaceIdsFromUsers } from '../../db/place'
-import { getUser } from '../../db/user'
-
-import { placeMarkers, currentLocationImage } from '../../constants/map-markers'
-import mapConfig from '../../constants/map-config'
-
-const MarkerClusterer = window.MarkerClusterer
+import PlaceSearch from './PlaceSearch'
 
 class MapView extends React.Component {
   constructor ( props ) {
     super( props )
 
+    this.updateActivePlace = this.updateActivePlace.bind( this )
+    this.updateMapCenter = this.updateMapCenter.bind( this )
+
     this.state = {
       places: [],
-      activePlaceIndex: null,
-      markers: [],
+      mapCenter: props.currentLocation,
+      activePlace: null,
+      detailView: false,
     }
   }
 
-  componentDidMount () {
-    this.generateMap()
-    this.renderMap()
-    this.renderCurrentLocationMarker()
-
-    this.$map.addEventListener( 'click', ( e ) => {
-      if ( e.target.tagName === 'IMG' ) return
-      this.setState({ activePlaceIndex: null })
-    })
+  updateActivePlace( activePlace = null ) {
+    this.setState({ activePlace })
   }
 
-  componentWillUnmount () {
-    this.isUnmounting = true
-  }
-
-  renderMap () {
-    const { currentUser } = this.props
-    if ( !currentUser ) return
-    const usersToShow = [ currentUser.uid ].concat( currentUser.following || [])
-
-    getPlaceIdsFromUsers( usersToShow )
-    .then(( _placeIds ) => {
-      const placeIds = uniq([].concat.apply([], _placeIds ))
-
-      getPlacesWithFollowerInfo( placeIds, currentUser )
-      .then(( places ) => {
-        this.updatePlaceData( places )
-      })
-    })
-  }
-
-  updatePlaceData ( places ) {
-    if ( this.isUnmounting ) return
-
-    this.setState({ places: places })
-    this.renderPlaceMarkers()
-    // this.renderMarkerClusterer()
-  }
-
-  renderMarkerClusterer () {
-    const options = {
-      styles: [
-        {
-          textColor: 'white',
-          url: '/assets/images/marker-black.svg',
-          height: 40,
-          width: 40,
-        },
-      ],
-    }
-
-    this.markerClusterer = new MarkerClusterer(
-      this.map,
-      this.state.markers,
-      options
-    )
-  }
-
-  renderPlaceMarkers () {
-    const markers = this.state.places.map(( place, i ) => {
-      // Safety net for dead data
-      if ( !place ) return
-
-      let placeMarkerImg = placeMarkers.friends
-
-      const { currentUser } = this.props
-      if ( currentUser && currentUser.places.indexOf( place.id ) > -1 ) {
-        placeMarkerImg = placeMarkers.yours
-      }
-
-      const marker = new google.maps.Marker({
-        position: {
-          lat: place.lat,
-          lng: place.lng,
-        },
-        icon: placeMarkerImg,
-        label: ' ',
-      })
-
-      marker.setMap( this.map )
-      marker.addListener( 'click', () => {
-        this.map.panTo( marker.getPosition())
-        this.setState({ activePlaceIndex: i })
-      })
-
-      return marker
-    })
-
-    this.setState({ markers })
-  }
-
-  renderCurrentLocationMarker () {
-    const marker = new google.maps.Marker({
-      position: this.props.currentLocation,
-      icon: currentLocationImage,
-      label: ' ',
-      optimized: false,
-    })
-
-    marker.setMap( this.map )
-  }
-
-  generateMap () {
-    const center = this.props.currentLocation
-    const _mapConfig = Object.assign({}, mapConfig, { center })
-
-    this.map = new google.maps.Map( this.$map, _mapConfig )
+  updateMapCenter( mapCenter = this.props.currentLocation ) {
+    this.setState({ mapCenter })
   }
 
   renderPlacePreview () {
-    const { activePlaceIndex, places } = this.state
-    if ( activePlaceIndex === null ) return null
+    const { activePlace } = this.state
+    if ( !activePlace ) return null
 
     return (
       <PlacePreview
-        activePlace={places[ activePlaceIndex ]}
+        activePlace={activePlace}
         currentLocation={this.props.currentLocation}
       />
     )
@@ -148,10 +42,10 @@ class MapView extends React.Component {
   renderMapTools() {
     return (
       <div className='map-tools'>
-        <div className='input-wrapper'>
-          <input type='text' placeholder='New York, NY'/>
-          <div className='more'>&bull; &bull; &bull;</div>
-        </div>
+        <PlaceSearch
+          updateMapCenter={this.updateMapCenter}
+          currentLocation={this.props.currentLocation}
+        />
         <div className='reference'>
           <div className='type label yours'>
             <div className='icon'></div>
@@ -171,10 +65,18 @@ class MapView extends React.Component {
   }
 
   render () {
+    const { activePlaceIndex } = this.state
+    const hasPlacePreview = activePlaceIndex !== null
+
     return (
-      <main id='map-view' className='view'>
+      <main id='map-view' className='view' data-has-place-preview={hasPlacePreview}>
         {this.renderMapTools()}
-        <div id='google-maps' ref={( $map ) => this.$map = $map}></div>
+        <PlaceMap
+          places={this.state.places}
+          mapCenter={this.state.mapCenter}
+          updateActivePlace={this.updateActivePlace}
+          currentUser={this.props.currentUser}
+        />
         {this.renderPlacePreview()}
       </main>
     )

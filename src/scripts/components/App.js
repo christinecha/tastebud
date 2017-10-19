@@ -145,7 +145,7 @@ class App extends React.Component {
         <Header {...this.props} />
         <Switch>
           <Route exact path='/' component={HomeView} />
-          <Route path='/map' component={MapViewContainer} />
+          <Route path='/map/:locationId' component={MapViewContainer} />
           <Route path='/sample' component={SampleComponent} />
           <Route path='/login' component={LoginViewContainer} />
           <Route path='/signup' component={SignupView} />
