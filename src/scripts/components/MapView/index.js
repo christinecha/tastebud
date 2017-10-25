@@ -2,6 +2,7 @@ import React from 'react'
 
 import PlaceMap from './PlaceMap'
 import PlacePreview from './PlacePreview'
+import PlaceDetail from './PlaceDetail'
 import PlaceSearch from './PlaceSearch'
 
 class MapView extends React.Component {
@@ -10,9 +11,9 @@ class MapView extends React.Component {
 
     this.updateActivePlace = this.updateActivePlace.bind( this )
     this.updateMapCenter = this.updateMapCenter.bind( this )
+    this.toggleDetailView = this.toggleDetailView.bind( this )
 
     this.state = {
-      places: [],
       mapCenter: props.currentLocation,
       activePlace: null,
       detailView: false,
@@ -27,14 +28,29 @@ class MapView extends React.Component {
     this.setState({ mapCenter })
   }
 
-  renderPlacePreview () {
-    const { activePlace } = this.state
+  toggleDetailView() {
+    this.setState({ detailView: !this.state.detailView })
+  }
+
+  renderPlaceInfo () {
+    const { activePlace, detailView } = this.state
     if ( !activePlace ) return null
+
+    if ( detailView ) {
+      return (
+        <PlaceDetail
+          activePlace={activePlace}
+          currentLocation={this.props.currentLocation}
+          toggleDetailView={this.toggleDetailView}
+        />
+      )
+    }
 
     return (
       <PlacePreview
         activePlace={activePlace}
         currentLocation={this.props.currentLocation}
+        toggleDetailView={this.toggleDetailView}
       />
     )
   }
@@ -72,12 +88,11 @@ class MapView extends React.Component {
       <main id='map-view' className='view' data-has-place-preview={hasPlacePreview}>
         {this.renderMapTools()}
         <PlaceMap
-          places={this.state.places}
           mapCenter={this.state.mapCenter}
           updateActivePlace={this.updateActivePlace}
           currentUser={this.props.currentUser}
         />
-        {this.renderPlacePreview()}
+        {this.renderPlaceInfo()}
       </main>
     )
   }

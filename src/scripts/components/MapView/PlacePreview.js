@@ -15,7 +15,7 @@ class PlacePreview extends React.Component {
     const distance = getFriendlyDistance( latLng, this.props.currentLocation )
 
     return (
-      <div className='place-preview'>
+      <div className='place-preview' onClick={this.props.toggleDetailView}>
         <div className='place-preview-content'>
           <h3>{activePlace.name}</h3>
           <p className='label'>{distance}</p>

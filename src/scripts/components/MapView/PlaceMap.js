@@ -75,7 +75,7 @@ class PlaceMap extends React.Component {
   }
 
   renderPlaceMarkers () {
-    const markers = this.state.places.map(( place ) => {
+    const markers = this.state.places.map(( place, i ) => {
       // Safety net for dead data
       if ( !place ) return
 
@@ -110,6 +110,8 @@ class PlaceMap extends React.Component {
 
         this.centerMapAt( marker.getPosition())
         marker.setIcon( largeIconImg )
+
+        this.setState({ activePlaceIndex: i })
         this.props.updateActivePlace( place )
       })
 

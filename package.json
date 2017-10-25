@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "webpack --watch",
     "lint": "eslint src --fix",
-    "start": "node ./server/app.js",
+    "start": "nodemon ./server/app.js",
     "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
