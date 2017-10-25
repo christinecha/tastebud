@@ -30680,6 +30680,8 @@ var _getFriendlyDistance = __webpack_require__(135);
 
 var _getFriendlyDistance2 = _interopRequireDefault(_getFriendlyDistance);
 
+var _place = __webpack_require__(58);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -30715,6 +30717,11 @@ var PlaceDetail = function (_React$Component) {
       var activePlace = this.props.activePlace;
 
 
+      if (activePlace.yelpRating) {
+        this.setState({ yelpRating: activePlace.yelpRating });
+        return;
+      }
+
       var searchRequest = {
         params: {
           term: activePlace.name,
@@ -30724,7 +30731,9 @@ var PlaceDetail = function (_React$Component) {
       };
 
       _axios2.default.get('/yelp-rating', searchRequest).then(function (response) {
-        _this2.setState({ yelpRating: response.data.rating.toFixed(1) });
+        var yelpRating = response.data.rating.toFixed(1);
+        _this2.setState({ yelpRating: yelpRating });
+        (0, _place.updatePlace)(activePlace.id, { yelpRating: yelpRating });
       });
     }
   }, {

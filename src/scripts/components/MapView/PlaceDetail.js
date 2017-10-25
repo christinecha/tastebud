@@ -1,6 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import getFriendlyDistance from '../../lib/getFriendlyDistance'
+import { updatePlace } from '../../db/place'
 
 class PlaceDetail extends React.Component {
   constructor( props ) {
@@ -18,6 +19,11 @@ class PlaceDetail extends React.Component {
   setYelpRating() {
     const { activePlace } = this.props
 
+    if ( activePlace.yelpRating ) {
+      this.setState({ yelpRating: activePlace.yelpRating })
+      return
+    }
+
     const searchRequest = {
       params: {
         term: activePlace.name,
@@ -28,7 +34,9 @@ class PlaceDetail extends React.Component {
 
     axios.get( '/yelp-rating', searchRequest )
     .then(( response ) => {
-      this.setState({ yelpRating: response.data.rating.toFixed( 1 ) })
+      const yelpRating = response.data.rating.toFixed( 1 )
+      this.setState({ yelpRating })
+      updatePlace( activePlace.id, { yelpRating })
     })
   }
 

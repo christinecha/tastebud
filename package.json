@@ -23,6 +23,7 @@
     "jsonfile": "^3.0.1",
     "less": "^2.7.2",
     "lodash": "^4.17.4",
+    "nodemon": "^1.12.1",
     "platform": "^1.3.4",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
