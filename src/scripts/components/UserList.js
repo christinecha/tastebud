@@ -44,10 +44,14 @@ class UserList extends React.Component {
     return this.state.users.map(( user ) => {
       if ( !user ) return null
 
+      const profilePicStyle = {
+        backgroundImage: `url(https://graph.facebook.com/${ user.uid }/picture?type=large)`,
+      }
+
       return (
         <Link to={`/users/${ user.uid }`} key={user.uid}>
           <div className='user'>
-            <div className='profile-picture'></div>
+            <div className='profile-picture' style={profilePicStyle}></div>
             <div className='info'>
               <h3>{user.fullName}</h3>
               <h5>@{user.username}</h5>

@@ -29,6 +29,14 @@ class UserView extends React.Component {
     watchUser( userId, this.handleWatchUser )
   }
 
+  componentDidUpdate() {
+    const userId = this.props.match.params.uid
+    if ( userId === this.state.user ) return
+
+    unwatchUser( this.state.user.uid, this.handleWatchUser )
+    watchUser( userId, this.handleWatchUser )
+  }
+
   handleWatchUser ( snapshot ) {
     if ( this.isUnmounting ) return
 

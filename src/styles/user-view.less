@@ -1,5 +1,5 @@
 #user-view {
-  padding-top: 20px;
+  padding-top: 30px;
 
   .edit-profile {
     position: absolute;
@@ -16,20 +16,30 @@
   .profile-picture {
     width: 100px;
     height: 100px;
+
+    border: 1px solid rgba(0,0,0,0.1);
     border-radius: 100%;
 
     background-size: cover;
     background-position: center;
     background-image: url('../../public/assets/images/default-profile-picture.png');
 
-    margin: auto;
+    margin: 20px auto;
+  }
+
+  h1 {
+    margin-bottom: 5px;
+  }
+
+  h5 {
+    margin-bottom: 8px;
   }
 
   .stats {
     display: flex;
     justify-content: space-between;
 
-    padding-top: 20px;
+    padding-top: 40px;
     padding-bottom: 20px;
 
     .stats-places,
