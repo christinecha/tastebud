@@ -28,6 +28,7 @@ class JoinView extends React.Component {
     const handleSuccess = ( uid ) => {
       getUser( uid ).then(( snapshot ) => {
         const user = snapshot.val()
+        this.props.updateCurrentUser( user )
       })
     }
 

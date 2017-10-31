@@ -8,10 +8,10 @@ import Header from './Header/index'
 import HomeView from './HomeView'
 import SampleComponent from './SampleComponent'
 import MapViewContainer from './containers/MapViewContainer'
+import JoinViewContainer from './containers/JoinViewContainer'
 import LoginViewContainer from './containers/LoginViewContainer'
 import SearchViewContainer from './containers/SearchViewContainer'
 import UserViewContainer from './containers/UserViewContainer'
-import JoinView from './JoinView/index'
 import UserView from './UserView/index'
 import FollowersView from './FollowersView'
 import FollowingView from './FollowingView'
@@ -150,7 +150,7 @@ class App extends React.Component {
           <Route path='/map/:locationId' component={MapViewContainer} />
           <Route path='/sample' component={SampleComponent} />
           <Route path='/login' component={LoginViewContainer} />
-          <Route path='/join' component={JoinView} />
+          <Route path='/join' component={JoinViewContainer} />
           <Route path='/search' component={SearchViewContainer} />
           <Route exact path='/users/:uid' component={UserViewContainer} />
           <PropsRoute path='/users/:uid/followers' component={FollowersView} {...this.props} />

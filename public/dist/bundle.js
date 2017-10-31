@@ -29747,6 +29747,10 @@ var _MapViewContainer = __webpack_require__(272);
 
 var _MapViewContainer2 = _interopRequireDefault(_MapViewContainer);
 
+var _JoinViewContainer = __webpack_require__(561);
+
+var _JoinViewContainer2 = _interopRequireDefault(_JoinViewContainer);
+
 var _LoginViewContainer = __webpack_require__(271);
 
 var _LoginViewContainer2 = _interopRequireDefault(_LoginViewContainer);
@@ -29759,13 +29763,9 @@ var _UserViewContainer = __webpack_require__(274);
 
 var _UserViewContainer2 = _interopRequireDefault(_UserViewContainer);
 
-var _index3 = __webpack_require__(560);
+var _index3 = __webpack_require__(133);
 
 var _index4 = _interopRequireDefault(_index3);
-
-var _index5 = __webpack_require__(133);
-
-var _index6 = _interopRequireDefault(_index5);
 
 var _FollowersView = __webpack_require__(252);
 
@@ -29951,7 +29951,7 @@ var App = function (_React$Component) {
           _react2.default.createElement(_reactRouterDom.Route, { path: '/map/:locationId', component: _MapViewContainer2.default }),
           _react2.default.createElement(_reactRouterDom.Route, { path: '/sample', component: _SampleComponent2.default }),
           _react2.default.createElement(_reactRouterDom.Route, { path: '/login', component: _LoginViewContainer2.default }),
-          _react2.default.createElement(_reactRouterDom.Route, { path: '/join', component: _index4.default }),
+          _react2.default.createElement(_reactRouterDom.Route, { path: '/join', component: _JoinViewContainer2.default }),
           _react2.default.createElement(_reactRouterDom.Route, { path: '/search', component: _SearchViewContainer2.default }),
           _react2.default.createElement(_reactRouterDom.Route, { exact: true, path: '/users/:uid', component: _UserViewContainer2.default }),
           _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid/followers', component: _FollowersView2.default }, this.props)),
@@ -64275,6 +64275,7 @@ var JoinView = function (_React$Component) {
       var handleSuccess = function handleSuccess(uid) {
         (0, _user.getUser)(uid).then(function (snapshot) {
           var user = snapshot.val();
+          _this2.props.updateCurrentUser(user);
         });
       };
 
@@ -64386,6 +64387,45 @@ var JoinView = function (_React$Component) {
 }(_react2.default.Component);
 
 exports.default = JoinView;
+
+/***/ }),
+/* 561 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _reactRedux = __webpack_require__(40);
+
+var _actions = __webpack_require__(58);
+
+var _JoinView = __webpack_require__(560);
+
+var _JoinView2 = _interopRequireDefault(_JoinView);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var mapStateToProps = function mapStateToProps(state) {
+  return {
+    currentUser: state.currentUser
+  };
+};
+
+var mapDispatchToProps = function mapDispatchToProps(dispatch) {
+  return {
+    updateCurrentUser: function updateCurrentUser(user) {
+      dispatch((0, _actions.updateCurrentUser)(user));
+    }
+  };
+};
+
+var JoinViewContainer = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(_JoinView2.default);
+
+exports.default = JoinViewContainer;
 
 /***/ })
 /******/ ]);
