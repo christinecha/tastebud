@@ -57,6 +57,7 @@
 
     // eslint-config-squarespace exceptions
     "camelcase": "warn",
+    "no-debugger": "warn",
     "no-else-return": "off",
     "no-invalid-this": "off",
     "no-multi-spaces": "off",

@@ -1,0 +1,55 @@
+#join-view {
+  padding-top: 50px;
+
+  h1 {
+
+  }
+
+  .account-form {
+    margin-top: 50px;
+
+    input {
+      width: 100%;
+      margin: 10px auto;
+    }
+
+    .validation {
+
+    }
+
+    .check {
+      font-size: 12px;
+      line-height: 2em;
+      text-align: left;
+
+      .icon {
+        display: inline-block;
+        vertical-align: middle;
+
+        width: 10px;
+        height: 10px;
+        border-radius: 100%;
+
+        margin-right: 5px;
+        margin-top: -3px;
+
+        background: @medium-gray;
+
+        &[data-is-valid="true"] {
+          background-color: green;
+        }
+      }
+    }
+
+    button {
+      width: 100%;
+      margin: 10px auto;
+
+      opacity: 0.5;
+
+      &[data-is-valid="true"] {
+        opacity: 1;
+      }
+    }
+  }
+}

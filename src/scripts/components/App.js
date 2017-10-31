@@ -11,14 +11,14 @@ import MapViewContainer from './containers/MapViewContainer'
 import LoginViewContainer from './containers/LoginViewContainer'
 import SearchViewContainer from './containers/SearchViewContainer'
 import UserViewContainer from './containers/UserViewContainer'
-import SignupView from './SignupView/index'
+import JoinView from './JoinView/index'
 import UserView from './UserView/index'
 import FollowersView from './FollowersView'
 import FollowingView from './FollowingView'
 
 import { getFullScreenHeight } from '../lib/static-height'
 import { getCurrentUser, watchAuthState } from '../db/auth'
-import { getUser, saveUser, watchUser, createUserFromFacebookRedirect } from '../db/user'
+import { getUser, watchUser, createUserFromFacebookRedirect } from '../db/user'
 
 const FORCE_REDIRECT_PATHS = [
   '/',
@@ -42,11 +42,6 @@ class App extends React.Component {
     window.addEventListener( 'resize', this.handleResize )
 
     this.props.history.listen(( location ) => this.handleHistoryListen( location ))
-
-    setTimeout(() => {
-      if ( this.isUnmounting ) return
-      this.setState({ isLoading: false })
-    }, 5000 )
 
     watchAuthState( this.handleAuthStateChange )
 
@@ -85,25 +80,31 @@ class App extends React.Component {
   }
 
   handleAuthStateChange ( data ) {
+    const { history } = this.props
+
     if ( !data || !data.uid ) {
       this.props.updateCurrentUser( null )
       this.setState({ isLoading: false })
+
+      history.push( '/' )
       return
     }
 
-    watchUser( data.uid, ( snapshot ) => {
+    const fbData = data.providerData[ 0 ]
+
+    watchUser( fbData.uid, ( snapshot ) => {
       const user = snapshot.val()
 
       this.props.updateCurrentUser( user )
 
-      if ( user ) return this.handleLogin( user )
+      if ( user ) {
+        this.handleLogin( user )
+        return
+      }
 
-      createUserFromFacebookRedirect(( uid ) => {
-        getUser( uid ).then(( _snapshot ) => {
-          const _user = _snapshot.val()
-          if ( _user ) this.handleLogin( _user )
-        })
-      })
+      // If there's no user, this is a new signup!
+      this.props.history.push( '/join' )
+      this.setState({ isLoading: false })
     })
   }
 
@@ -149,7 +150,7 @@ class App extends React.Component {
           <Route path='/map/:locationId' component={MapViewContainer} />
           <Route path='/sample' component={SampleComponent} />
           <Route path='/login' component={LoginViewContainer} />
-          <Route path='/signup' component={SignupView} />
+          <Route path='/join' component={JoinView} />
           <Route path='/search' component={SearchViewContainer} />
           <Route exact path='/users/:uid' component={UserViewContainer} />
           <PropsRoute path='/users/:uid/followers' component={FollowersView} {...this.props} />

@@ -130,6 +130,10 @@ class UserView extends React.Component {
       currentUser.uid === user.uid
     )
 
+    const profilePicStyle = {
+      backgroundImage: `url(https://graph.facebook.com/${ user.uid }/picture?type=large)`,
+    }
+
     return (
       <div>
         {isSelf &&
@@ -148,7 +152,7 @@ class UserView extends React.Component {
             follow
           </button>
         }
-        <div className='profile-picture'></div>
+        <div className='profile-picture' style={profilePicStyle}></div>
         <h1>{user.fullName}</h1>
         <h5>@{user.username}</h5>
         <h6 className='location'>New York, NY</h6>

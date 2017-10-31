@@ -15,6 +15,14 @@ export const findUsersByUsername = ( query ) => {
   .once( 'value' )
 }
 
+export const findUserByExactUsername = ( username ) => {
+  return ref.child( 'users' )
+  .orderByChild( 'username' )
+  .startAt( username )
+  .endAt( username )
+  .once( 'value' )
+}
+
 export const getUser = ( id ) => {
   return ref.child( `users/${ id }` ).once( 'value' )
 }
@@ -31,17 +39,26 @@ export const updateUser = ( id, data ) => {
   return ref.child( `users/${ id }` ).update( data )
 }
 
-export const createUserFromFacebookRedirect = ( callback ) => {
+export const createUserFromFacebookRedirect = ( username, callback, err ) => {
   getUserFromFacebook().then(( result ) => {
-    const fbUser = result.user
+    const { user } = result
 
-    if ( !fbUser ) return
+    if ( !user ) {
+      if ( err ) err()
+      throw Error( 'This Facebook user is invalid.' )
+    }
 
-    saveUser({
-      fullName: fbUser.displayName,
-      uid: fbUser.uid,
-    })
-    .then(() => callback( fbUser.uid ))
+    const fbData = user.providerData[ 0 ]
+
+    const userData = {
+      username,
+      fullName: fbData.displayName,
+      uid: fbData.uid,
+      email: fbData.email || null,
+    }
+
+    saveUser( userData )
+    .then(() => callback( userData.uid ))
   })
 }
 

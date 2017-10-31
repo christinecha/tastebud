@@ -2209,7 +2209,7 @@ if (process.env.NODE_ENV !== 'production') {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.addPlaceToUser = exports.removePlaceFromUser = exports.updateUserFollowing = exports.followUser = exports.createUserFromFacebookRedirect = exports.updateUser = exports.unwatchUser = exports.watchUser = exports.getUser = exports.findUsersByUsername = exports.saveUser = undefined;
+exports.addPlaceToUser = exports.removePlaceFromUser = exports.updateUserFollowing = exports.followUser = exports.createUserFromFacebookRedirect = exports.updateUser = exports.unwatchUser = exports.watchUser = exports.getUser = exports.findUserByExactUsername = exports.findUsersByUsername = exports.saveUser = undefined;
 
 var _firebase = __webpack_require__(85);
 
@@ -2233,6 +2233,10 @@ var findUsersByUsername = exports.findUsersByUsername = function findUsersByUser
   return _firebase.ref.child('users').orderByChild('username').startAt(query).once('value');
 };
 
+var findUserByExactUsername = exports.findUserByExactUsername = function findUserByExactUsername(username) {
+  return _firebase.ref.child('users').orderByChild('username').startAt(username).endAt(username).once('value');
+};
+
 var getUser = exports.getUser = function getUser(id) {
   return _firebase.ref.child('users/' + id).once('value');
 };
@@ -2249,17 +2253,27 @@ var updateUser = exports.updateUser = function updateUser(id, data) {
   return _firebase.ref.child('users/' + id).update(data);
 };
 
-var createUserFromFacebookRedirect = exports.createUserFromFacebookRedirect = function createUserFromFacebookRedirect(callback) {
+var createUserFromFacebookRedirect = exports.createUserFromFacebookRedirect = function createUserFromFacebookRedirect(username, callback, err) {
   (0, _auth.getUserFromFacebook)().then(function (result) {
-    var fbUser = result.user;
+    var user = result.user;
 
-    if (!fbUser) return;
 
-    saveUser({
-      fullName: fbUser.displayName,
-      uid: fbUser.uid
-    }).then(function () {
-      return callback(fbUser.uid);
+    if (!user) {
+      if (err) err();
+      throw Error('This Facebook user is invalid.');
+    }
+
+    var fbData = user.providerData[0];
+
+    var userData = {
+      username: username,
+      fullName: fbData.displayName,
+      uid: fbData.uid,
+      email: fbData.email || null
+    };
+
+    saveUser(userData).then(function () {
+      return callback(userData.uid);
     });
   });
 };
@@ -2329,7 +2343,7 @@ var _snap = __webpack_require__(154);
 
 var _PriorityIndex = __webpack_require__(13);
 
-var _KeyIndex = __webpack_require__(49);
+var _KeyIndex = __webpack_require__(50);
 
 var _IndexMap = __webpack_require__(149);
 
@@ -6869,6 +6883,132 @@ module.exports = reactProdInvariant;
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getPlacesWithFollowerInfo = exports.getPlaces = exports.getPlaceIdsFromUsers = exports.removeUserFromPlace = exports.addUserToPlace = exports.updatePlace = exports.getPlace = exports.newPlace = exports.isDupePlace = undefined;
+
+var _firebase = __webpack_require__(85);
+
+var _createPlaceObject = __webpack_require__(280);
+
+var _createPlaceObject2 = _interopRequireDefault(_createPlaceObject);
+
+var _getFollowerInfo = __webpack_require__(134);
+
+var _user = __webpack_require__(15);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var isDupePlace = exports.isDupePlace = function isDupePlace(locationData) {
+  return new Promise(function (resolve, reject) {
+    _firebase.ref.child('places').orderByChild('lat').equalTo(locationData.lat).on('value', function (snapshot) {
+      snapshot.forEach(function (child) {
+        var location = child.val();
+        if (locationData.lng === location.lng) {
+          resolve(child.key);
+        }
+      });
+
+      resolve(null);
+    });
+  });
+};
+
+var newPlace = exports.newPlace = function newPlace(_locationData) {
+  return new Promise(function (resolve, reject) {
+    var locationData = (0, _createPlaceObject2.default)(_locationData);
+
+    isDupePlace(locationData).then(function (dupeId) {
+      if (dupeId) return resolve(dupeId);
+
+      _firebase.ref.child('places/' + locationData.id).set(locationData).then(function () {
+        return resolve(locationData.id);
+      });
+    });
+  });
+};
+
+var getPlace = exports.getPlace = function getPlace(id) {
+  return _firebase.ref.child('places/' + id).once('value');
+};
+
+var updatePlace = exports.updatePlace = function updatePlace(id, data) {
+  return _firebase.ref.child('places/' + id).update(data);
+};
+
+var addUserToPlace = exports.addUserToPlace = function addUserToPlace(placeId, userId) {
+  getPlace(placeId).then(function (snapshot) {
+    var place = snapshot.val();
+    var users = place.users || [];
+
+    if (users.indexOf(userId) > -1) return;
+
+    users.push(userId);
+    updatePlace(placeId, { users: users });
+  });
+};
+
+var removeUserFromPlace = exports.removeUserFromPlace = function removeUserFromPlace(placeId, userId) {
+  getPlace(placeId).then(function (snapshot) {
+    var place = snapshot.val();
+    var users = place.users || [];
+
+    if (users.length < 1) return;
+
+    var index = users.indexOf(userId);
+    users.splice(userId, 1);
+
+    updatePlace(placeId, { users: users });
+  });
+};
+
+var getPlaceIdsFromUsers = exports.getPlaceIdsFromUsers = function getPlaceIdsFromUsers(users) {
+  return Promise.all(users.map(function (userId) {
+    return new Promise(function (resolve, reject) {
+      (0, _user.getUser)(userId).then(function (userSnapshot) {
+        var user = userSnapshot.val();
+        resolve(user.places || []);
+      });
+    });
+  }));
+};
+
+var getPlaces = exports.getPlaces = function getPlaces(places) {
+  return Promise.all(places.map(function (place) {
+    return new Promise(function (resolve, reject) {
+      getPlace(place).then(function (snapshot) {
+        resolve(snapshot.val());
+      });
+    });
+  }));
+};
+
+var getPlacesWithFollowerInfo = exports.getPlacesWithFollowerInfo = function getPlacesWithFollowerInfo(places, currentUser) {
+  return new Promise(function (resolve, reject) {
+    getPlaces(places).then(function (places) {
+      var promises = places.map(function (place) {
+        return (0, _getFollowerInfo.getFollowerInfo)(place, currentUser);
+      });
+
+      Promise.all(promises).then(function (messages) {
+        messages.forEach(function (message, i) {
+          if (places[i]) places[i].followerInfo = message;
+        });
+
+        resolve(places);
+      });
+    });
+  });
+};
+
+/***/ }),
+/* 50 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 /*! @license Firebase v4.3.0
 Build: rev-bd8265e
 Terms: https://firebase.google.com/terms/ */
@@ -6994,7 +7134,7 @@ var KEY_INDEX = exports.KEY_INDEX = new KeyIndex();
 
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7118,7 +7258,7 @@ function nodeFromJSON(json, priority) {
 
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7185,7 +7325,7 @@ var createPath = exports.createPath = function createPath(location) {
 };
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7256,7 +7396,7 @@ var createPath = function createPath(location) {
 };
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7536,7 +7676,7 @@ module.exports = EventPluginHub;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7552,7 +7692,7 @@ module.exports = EventPluginHub;
 
 
 
-var EventPluginHub = __webpack_require__(53);
+var EventPluginHub = __webpack_require__(54);
 var EventPluginUtils = __webpack_require__(108);
 
 var accumulateInto = __webpack_require__(200);
@@ -7676,7 +7816,7 @@ module.exports = EventPropagators;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(0)))
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7727,7 +7867,7 @@ var ReactInstanceMap = {
 module.exports = ReactInstanceMap;
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7791,7 +7931,7 @@ SyntheticEvent.augmentClass(SyntheticUIEvent, UIEventInterface);
 module.exports = SyntheticUIEvent;
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7815,132 +7955,6 @@ var updateCurrentLocation = exports.updateCurrentLocation = function updateCurre
       lng: location.lng
     }
   };
-};
-
-/***/ }),
-/* 58 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.getPlacesWithFollowerInfo = exports.getPlaces = exports.getPlaceIdsFromUsers = exports.removeUserFromPlace = exports.addUserToPlace = exports.updatePlace = exports.getPlace = exports.newPlace = exports.isDupePlace = undefined;
-
-var _firebase = __webpack_require__(85);
-
-var _createPlaceObject = __webpack_require__(280);
-
-var _createPlaceObject2 = _interopRequireDefault(_createPlaceObject);
-
-var _getFollowerInfo = __webpack_require__(134);
-
-var _user = __webpack_require__(15);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var isDupePlace = exports.isDupePlace = function isDupePlace(locationData) {
-  return new Promise(function (resolve, reject) {
-    _firebase.ref.child('places').orderByChild('lat').equalTo(locationData.lat).on('value', function (snapshot) {
-      snapshot.forEach(function (child) {
-        var location = child.val();
-        if (locationData.lng === location.lng) {
-          resolve(child.key);
-        }
-      });
-
-      resolve(null);
-    });
-  });
-};
-
-var newPlace = exports.newPlace = function newPlace(_locationData) {
-  return new Promise(function (resolve, reject) {
-    var locationData = (0, _createPlaceObject2.default)(_locationData);
-
-    isDupePlace(locationData).then(function (dupeId) {
-      if (dupeId) return resolve(dupeId);
-
-      _firebase.ref.child('places/' + locationData.id).set(locationData).then(function () {
-        return resolve(locationData.id);
-      });
-    });
-  });
-};
-
-var getPlace = exports.getPlace = function getPlace(id) {
-  return _firebase.ref.child('places/' + id).once('value');
-};
-
-var updatePlace = exports.updatePlace = function updatePlace(id, data) {
-  return _firebase.ref.child('places/' + id).update(data);
-};
-
-var addUserToPlace = exports.addUserToPlace = function addUserToPlace(placeId, userId) {
-  getPlace(placeId).then(function (snapshot) {
-    var place = snapshot.val();
-    var users = place.users || [];
-
-    if (users.indexOf(userId) > -1) return;
-
-    users.push(userId);
-    updatePlace(placeId, { users: users });
-  });
-};
-
-var removeUserFromPlace = exports.removeUserFromPlace = function removeUserFromPlace(placeId, userId) {
-  getPlace(placeId).then(function (snapshot) {
-    var place = snapshot.val();
-    var users = place.users || [];
-
-    if (users.length < 1) return;
-
-    var index = users.indexOf(userId);
-    users.splice(userId, 1);
-
-    updatePlace(placeId, { users: users });
-  });
-};
-
-var getPlaceIdsFromUsers = exports.getPlaceIdsFromUsers = function getPlaceIdsFromUsers(users) {
-  return Promise.all(users.map(function (userId) {
-    return new Promise(function (resolve, reject) {
-      (0, _user.getUser)(userId).then(function (userSnapshot) {
-        var user = userSnapshot.val();
-        resolve(user.places || []);
-      });
-    });
-  }));
-};
-
-var getPlaces = exports.getPlaces = function getPlaces(places) {
-  return Promise.all(places.map(function (place) {
-    return new Promise(function (resolve, reject) {
-      getPlace(place).then(function (snapshot) {
-        resolve(snapshot.val());
-      });
-    });
-  }));
-};
-
-var getPlacesWithFollowerInfo = exports.getPlacesWithFollowerInfo = function getPlacesWithFollowerInfo(places, currentUser) {
-  return new Promise(function (resolve, reject) {
-    getPlaces(places).then(function (places) {
-      var promises = places.map(function (place) {
-        return (0, _getFollowerInfo.getFollowerInfo)(place, currentUser);
-      });
-
-      Promise.all(promises).then(function (messages) {
-        messages.forEach(function (message, i) {
-          if (places[i]) places[i].followerInfo = message;
-        });
-
-        resolve(places);
-      });
-    });
-  });
 };
 
 /***/ }),
@@ -8004,7 +8018,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _ServerValues = __webpack_require__(158);
 
-var _nodeFromJSON = __webpack_require__(50);
+var _nodeFromJSON = __webpack_require__(51);
 
 var _Path = __webpack_require__(9);
 
@@ -9385,7 +9399,7 @@ var CONSTANTS = exports.CONSTANTS = {
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return locationsAreEqual; });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_resolve_pathname__ = __webpack_require__(224);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_value_equal__ = __webpack_require__(226);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__PathUtils__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__PathUtils__ = __webpack_require__(53);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 
@@ -10135,7 +10149,7 @@ module.exports = ReactBrowserEventEmitter;
 
 
 
-var SyntheticUIEvent = __webpack_require__(56);
+var SyntheticUIEvent = __webpack_require__(57);
 var ViewportMetrics = __webpack_require__(199);
 
 var getEventModifierState = __webpack_require__(116);
@@ -13687,7 +13701,7 @@ var _valueEqual = __webpack_require__(226);
 
 var _valueEqual2 = _interopRequireDefault(_valueEqual);
 
-var _PathUtils = __webpack_require__(51);
+var _PathUtils = __webpack_require__(52);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -14820,7 +14834,7 @@ module.exports = ReactErrorUtils;
 var _prodInvariant = __webpack_require__(6);
 
 var ReactCurrentOwner = __webpack_require__(27);
-var ReactInstanceMap = __webpack_require__(55);
+var ReactInstanceMap = __webpack_require__(56);
 var ReactInstrumentation = __webpack_require__(23);
 var ReactUpdates = __webpack_require__(26);
 
@@ -16002,7 +16016,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__LocationUtils__ = __webpack_require__(70);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "createLocation", function() { return __WEBPACK_IMPORTED_MODULE_3__LocationUtils__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "locationsAreEqual", function() { return __WEBPACK_IMPORTED_MODULE_3__LocationUtils__["b"]; });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__PathUtils__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__PathUtils__ = __webpack_require__(53);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "parsePath", function() { return __WEBPACK_IMPORTED_MODULE_4__PathUtils__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "createPath", function() { return __WEBPACK_IMPORTED_MODULE_4__PathUtils__["b"]; });
 
@@ -16352,60 +16366,7 @@ var PlaceList = function (_React$Component) {
 exports.default = PlaceList;
 
 /***/ }),
-/* 132 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var INPUT_TYPES = exports.INPUT_TYPES = {
-  'fullName': 'text',
-  'email': 'email',
-  'username': 'text',
-  'password': 'password'
-};
-
-var PLACEHOLDERS = exports.PLACEHOLDERS = {
-  'fullName': 'Enter your full name',
-  'email': 'Enter your email',
-  'username': 'Choose a username',
-  'password': 'Create your password'
-};
-
-var LABELS = exports.LABELS = {
-  'fullName': 'Full Name',
-  'email': 'Email',
-  'username': 'Username',
-  'password': 'Password'
-};
-
-var VALIDATION_ERRORS = exports.VALIDATION_ERRORS = {
-  'fullName': {
-    'general': 'Please enter your full name.'
-  },
-  'email': {
-    'general': 'Please enter a valid email address.'
-  },
-  'username': {
-    'empty': 'Please enter a username.',
-    'unavailable': 'This username is unavailable.'
-  },
-  'password': {
-    'general': 'Please enter a valid password.'
-  }
-};
-
-var STEPS = exports.STEPS = {
-  0: 'fullName',
-  1: 'email',
-  2: 'username',
-  3: 'password'
-};
-
-/***/ }),
+/* 132 */,
 /* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -16428,7 +16389,7 @@ var _reactRouterDom = __webpack_require__(24);
 
 var _user = __webpack_require__(15);
 
-var _place = __webpack_require__(58);
+var _place = __webpack_require__(49);
 
 var _getFollowerInfo = __webpack_require__(134);
 
@@ -16622,6 +16583,10 @@ var UserView = function (_React$Component) {
 
       var isSelf = currentUser && currentUser.uid === user.uid;
 
+      var profilePicStyle = {
+        backgroundImage: 'url(https://graph.facebook.com/' + user.uid + '/picture?type=large)'
+      };
+
       return _react2.default.createElement(
         'div',
         null,
@@ -16645,7 +16610,7 @@ var UserView = function (_React$Component) {
           },
           'follow'
         ),
-        _react2.default.createElement('div', { className: 'profile-picture' }),
+        _react2.default.createElement('div', { className: 'profile-picture', style: profilePicStyle }),
         _react2.default.createElement(
           'h1',
           null,
@@ -17590,7 +17555,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _assert = __webpack_require__(4);
 
-var _KeyIndex = __webpack_require__(49);
+var _KeyIndex = __webpack_require__(50);
 
 var _PriorityIndex = __webpack_require__(13);
 
@@ -19596,7 +19561,7 @@ var _Node = __webpack_require__(20);
 
 var _PriorityIndex = __webpack_require__(13);
 
-var _KeyIndex = __webpack_require__(49);
+var _KeyIndex = __webpack_require__(50);
 
 /**
 * Copyright 2017 Google Inc.
@@ -19973,7 +19938,7 @@ var _ChildrenNode = __webpack_require__(16);
 
 var _Node = __webpack_require__(20);
 
-var _nodeFromJSON = __webpack_require__(50);
+var _nodeFromJSON = __webpack_require__(51);
 
 /**
 * Copyright 2017 Google Inc.
@@ -20096,7 +20061,7 @@ var _Node = __webpack_require__(20);
 
 var _util = __webpack_require__(5);
 
-var _nodeFromJSON = __webpack_require__(50);
+var _nodeFromJSON = __webpack_require__(51);
 
 /**
 * Copyright 2017 Google Inc.
@@ -20574,7 +20539,7 @@ var _SparseSnapshotTree = __webpack_require__(146);
 
 var _LeafNode = __webpack_require__(61);
 
-var _nodeFromJSON = __webpack_require__(50);
+var _nodeFromJSON = __webpack_require__(51);
 
 var _PriorityIndex = __webpack_require__(13);
 
@@ -25876,7 +25841,7 @@ var ReactDOMComponentTree = __webpack_require__(10);
 var ReactDOMContainerInfo = __webpack_require__(457);
 var ReactDOMFeatureFlags = __webpack_require__(459);
 var ReactFeatureFlags = __webpack_require__(193);
-var ReactInstanceMap = __webpack_require__(55);
+var ReactInstanceMap = __webpack_require__(56);
 var ReactInstrumentation = __webpack_require__(23);
 var ReactMarkupChecksum = __webpack_require__(479);
 var ReactReconciler = __webpack_require__(46);
@@ -28709,7 +28674,7 @@ var _reactRedux = __webpack_require__(40);
 
 var _reactRouterDom = __webpack_require__(24);
 
-var _actions = __webpack_require__(57);
+var _actions = __webpack_require__(58);
 
 var _App = __webpack_require__(251);
 
@@ -29794,7 +29759,7 @@ var _UserViewContainer = __webpack_require__(274);
 
 var _UserViewContainer2 = _interopRequireDefault(_UserViewContainer);
 
-var _index3 = __webpack_require__(269);
+var _index3 = __webpack_require__(560);
 
 var _index4 = _interopRequireDefault(_index3);
 
@@ -29814,7 +29779,7 @@ var _staticHeight = __webpack_require__(283);
 
 var _auth = __webpack_require__(41);
 
-var _user2 = __webpack_require__(15);
+var _user = __webpack_require__(15);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -29854,11 +29819,6 @@ var App = function (_React$Component) {
       this.props.history.listen(function (location) {
         return _this2.handleHistoryListen(location);
       });
-
-      setTimeout(function () {
-        if (_this2.isUnmounting) return;
-        _this2.setState({ isLoading: false });
-      }, 5000);
 
       (0, _auth.watchAuthState)(this.handleAuthStateChange);
 
@@ -29907,25 +29867,32 @@ var App = function (_React$Component) {
     value: function handleAuthStateChange(data) {
       var _this3 = this;
 
+      var history = this.props.history;
+
+
       if (!data || !data.uid) {
         this.props.updateCurrentUser(null);
         this.setState({ isLoading: false });
+
+        history.push('/');
         return;
       }
 
-      (0, _user2.watchUser)(data.uid, function (snapshot) {
+      var fbData = data.providerData[0];
+
+      (0, _user.watchUser)(fbData.uid, function (snapshot) {
         var user = snapshot.val();
 
         _this3.props.updateCurrentUser(user);
 
-        if (user) return _this3.handleLogin(user);
+        if (user) {
+          _this3.handleLogin(user);
+          return;
+        }
 
-        (0, _user2.createUserFromFacebookRedirect)(function (uid) {
-          (0, _user2.getUser)(uid).then(function (_snapshot) {
-            var _user = _snapshot.val();
-            if (_user) _this3.handleLogin(_user);
-          });
-        });
+        // If there's no user, this is a new signup!
+        _this3.props.history.push('/join');
+        _this3.setState({ isLoading: false });
       });
     }
   }, {
@@ -29984,7 +29951,7 @@ var App = function (_React$Component) {
           _react2.default.createElement(_reactRouterDom.Route, { path: '/map/:locationId', component: _MapViewContainer2.default }),
           _react2.default.createElement(_reactRouterDom.Route, { path: '/sample', component: _SampleComponent2.default }),
           _react2.default.createElement(_reactRouterDom.Route, { path: '/login', component: _LoginViewContainer2.default }),
-          _react2.default.createElement(_reactRouterDom.Route, { path: '/signup', component: _index4.default }),
+          _react2.default.createElement(_reactRouterDom.Route, { path: '/join', component: _index4.default }),
           _react2.default.createElement(_reactRouterDom.Route, { path: '/search', component: _SearchViewContainer2.default }),
           _react2.default.createElement(_reactRouterDom.Route, { exact: true, path: '/users/:uid', component: _UserViewContainer2.default }),
           _react2.default.createElement(_PropsRoute2.default, _extends({ path: '/users/:uid/followers', component: _FollowersView2.default }, this.props)),
@@ -30338,6 +30305,10 @@ var _reactRouterDom = __webpack_require__(24);
 
 var _auth = __webpack_require__(41);
 
+var _Carousel = __webpack_require__(557);
+
+var _Carousel2 = _interopRequireDefault(_Carousel);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -30349,76 +30320,18 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var HomeView = function (_React$Component) {
   _inherits(HomeView, _React$Component);
 
-  function HomeView(props) {
+  function HomeView() {
     _classCallCheck(this, HomeView);
 
-    var _this = _possibleConstructorReturn(this, (HomeView.__proto__ || Object.getPrototypeOf(HomeView)).call(this, props));
-
-    _this.state = {
-      carouselIndex: 0
-    };
-    return _this;
+    return _possibleConstructorReturn(this, (HomeView.__proto__ || Object.getPrototypeOf(HomeView)).apply(this, arguments));
   }
 
   _createClass(HomeView, [{
-    key: 'componentDidMount',
-    value: function componentDidMount() {
-      var _this2 = this;
+    key: 'handleContinue',
+    value: function handleContinue() {
+      var history = this.props.history;
 
-      this.$slides = this.$carousel.children;
-      this.numOfSlides = this.$slides.length;
-
-      this.carouselInterval = setInterval(function () {
-        _this2.nextSlide();
-      }, 3000);
-    }
-  }, {
-    key: 'componentWillUnmount',
-    value: function componentWillUnmount() {
-      clearInterval(this.carouselInterval);
-    }
-  }, {
-    key: 'nextSlide',
-    value: function nextSlide() {
-      var carouselIndex = (this.state.carouselIndex + 1) % this.numOfSlides;
-      this.setState({ carouselIndex: carouselIndex });
-    }
-  }, {
-    key: 'renderCarousel',
-    value: function renderCarousel() {
-      var _this3 = this;
-
-      var slides = ['', '', '', ''];
-
-      var $slides = slides.map(function (slide, i) {
-        var isActive = _this3.state.carouselIndex === i;
-        return _react2.default.createElement('div', { className: 'slide ' + (isActive ? 'is-active' : ''), key: i });
-      });
-
-      var $indicators = slides.map(function (slide, i) {
-        var isActive = _this3.state.carouselIndex === i;
-        return _react2.default.createElement('div', { className: 'indicator ' + (isActive ? 'is-active' : ''), key: i });
-      });
-
-      return _react2.default.createElement(
-        'div',
-        {
-          className: 'onboarding-carousel',
-          ref: function ref($c) {
-            return _this3.$carousel = $c;
-          }
-        },
-        _react2.default.createElement(
-          'div',
-          { className: 'slides-wrapper' },
-          $slides
-        ),
-        _react2.default.createElement(
-          'div',
-          { className: 'indicators-wrapper' },
-          $indicators
-        )
-      );
+      history.push('/join');
     }
   }, {
     key: 'render',
@@ -30432,40 +30345,21 @@ var HomeView = function (_React$Component) {
           _react2.default.createElement(
             'h1',
             null,
-            'tastemark'
+            'flavorite'
           ),
           _react2.default.createElement(
             'h3',
             null,
             'The best way to save the best places.'
           ),
-          this.renderCarousel(),
+          _react2.default.createElement(_Carousel2.default, null),
           _react2.default.createElement(
             'button',
             {
               className: 'button facebook full-width',
               onClick: _auth.signInWithFacebook
             },
-            'Sign up with Facebook'
-          ),
-          _react2.default.createElement(
-            _reactRouterDom.Link,
-            { to: '/signup' },
-            _react2.default.createElement(
-              'button',
-              { className: 'button full-width knockout' },
-              'Sign up with Email'
-            )
-          ),
-          _react2.default.createElement(
-            'div',
-            { className: 'log-in-prompt small' },
-            'Already have an account?',
-            _react2.default.createElement(
-              _reactRouterDom.Link,
-              { to: '/login', className: 'log-in' },
-              'Log In'
-            )
+            'Continue with Facebook'
           )
         )
       );
@@ -30680,7 +30574,7 @@ var _getFriendlyDistance = __webpack_require__(135);
 
 var _getFriendlyDistance2 = _interopRequireDefault(_getFriendlyDistance);
 
-var _place = __webpack_require__(58);
+var _place = __webpack_require__(49);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -30856,7 +30750,7 @@ var _uniq = __webpack_require__(437);
 
 var _uniq2 = _interopRequireDefault(_uniq);
 
-var _place = __webpack_require__(58);
+var _place = __webpack_require__(49);
 
 var _mapMarkers = __webpack_require__(277);
 
@@ -31426,7 +31320,7 @@ var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
 
-var _place2 = __webpack_require__(58);
+var _place2 = __webpack_require__(49);
 
 var _user = __webpack_require__(15);
 
@@ -31791,7 +31685,7 @@ var _react2 = _interopRequireDefault(_react);
 
 var _user = __webpack_require__(15);
 
-var _place = __webpack_require__(58);
+var _place = __webpack_require__(49);
 
 var _PlaceList = __webpack_require__(131);
 
@@ -32036,271 +31930,8 @@ var SearchView = function (_React$Component) {
 exports.default = SearchView;
 
 /***/ }),
-/* 268 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.password = exports.username = exports.email = exports.fullName = undefined;
-
-var _user = __webpack_require__(15);
-
-var _constants = __webpack_require__(132);
-
-var fullName = exports.fullName = function fullName(val) {
-  return new Promise(function (resolve, reject) {
-    if (val.trim().length < 1) return resolve(_constants.VALIDATION_ERRORS.fullName.general);
-    resolve(false);
-  });
-};
-
-var email = exports.email = function email(val) {
-  return new Promise(function (resolve, reject) {
-    if (val.split('@').length !== 2 || val.split('@')[1] === '' || val.split('.').length < 2 || val.split('.')[1] === '') {
-      return resolve(_constants.VALIDATION_ERRORS.email.general);
-    }
-
-    resolve(false);
-  });
-};
-
-var username = exports.username = function username(val) {
-  return new Promise(function (resolve, reject) {
-    if (val.trim().length < 1) return resolve(_constants.VALIDATION_ERRORS.username.empty);
-
-    (0, _user.getUser)(val).then(function (user) {
-      if (user.exists()) resolve(_constants.VALIDATION_ERRORS.username.unavailable);else resolve(false);
-    });
-  });
-};
-
-var password = exports.password = function password(val) {
-  return new Promise(function (resolve, reject) {
-    if (val.length < 8) {
-      return resolve(_constants.VALIDATION_ERRORS.password.general);
-    }
-
-    resolve(false);
-  });
-};
-
-/***/ }),
-/* 269 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _react = __webpack_require__(2);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _auth = __webpack_require__(41);
-
-var _user = __webpack_require__(15);
-
-var _userSchema = __webpack_require__(86);
-
-var _userSchema2 = _interopRequireDefault(_userSchema);
-
-var _FormGroup = __webpack_require__(275);
-
-var _FormGroup2 = _interopRequireDefault(_FormGroup);
-
-var _constants = __webpack_require__(132);
-
-var constants = _interopRequireWildcard(_constants);
-
-var _hasError = __webpack_require__(268);
-
-var hasError = _interopRequireWildcard(_hasError);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var SignupView = function (_React$Component) {
-  _inherits(SignupView, _React$Component);
-
-  function SignupView(props) {
-    _classCallCheck(this, SignupView);
-
-    var _this = _possibleConstructorReturn(this, (SignupView.__proto__ || Object.getPrototypeOf(SignupView)).call(this, props));
-
-    _this.handleClick = _this.handleClick.bind(_this);
-    _this.handleInputChange = _this.handleInputChange.bind(_this);
-
-    _this.state = {
-      step: 0,
-      fullName: '',
-      email: '',
-      username: '',
-      password: '',
-      isValidated: false,
-      loginMessage: ''
-    };
-    return _this;
-  }
-
-  _createClass(SignupView, [{
-    key: 'handleClick',
-    value: function handleClick() {
-      var _this2 = this;
-
-      if (!this.state.isValidated) return;
-
-      var step = constants.STEPS[this.state.step];
-
-      var newState = {};
-      newState[step] = this.$input.value;
-
-      newState.step = this.state.step + 1;
-      newState.isValidated = false;
-
-      this.$input.value = '';
-      this.setState(newState, function () {
-        // This was the last step of the form!
-        if (_this2.state.step === Object.keys(constants.STEPS).length) {
-          _this2.submitForm();
-        }
-      });
-    }
-  }, {
-    key: 'getValidated',
-    value: function getValidated(value) {
-      var _this3 = this;
-
-      var step = constants.STEPS[this.state.step];
-
-      hasError[step](value).then(function (error) {
-        _this3.setState({ isValidated: !error });
-      });
-    }
-  }, {
-    key: 'submitForm',
-    value: function submitForm() {
-      var _this4 = this;
-
-      var _state = this.state,
-          fullName = _state.fullName,
-          email = _state.email,
-          username = _state.username,
-          password = _state.password;
-
-
-      (0, _auth.signUpWithEmail)(email, password).then(function (response) {
-        (0, _user.saveUser)({
-          uid: response.uid,
-          fullName: fullName,
-          email: email,
-          username: username,
-          dateJoined: performance.now()
-        });
-      }).catch(function (error) {
-        console.log(error);
-        _this4.setState(setErrorMsg('Invalid username/password.'));
-      });
-    }
-  }, {
-    key: 'handleInputChange',
-    value: function handleInputChange(e) {
-      var step = constants.STEPS[this.state.step];
-
-      this.getValidated(e.target.value);
-    }
-  }, {
-    key: 'renderInput',
-    value: function renderInput() {
-      var _this5 = this;
-
-      var step = constants.STEPS[this.state.step];
-      var type = constants.INPUT_TYPES[step];
-      var label = constants.LABELS[step];
-      var placeholder = constants.PLACEHOLDERS[step];
-
-      return _react2.default.createElement(
-        'div',
-        null,
-        _react2.default.createElement(
-          'label',
-          null,
-          label
-        ),
-        _react2.default.createElement(
-          'div',
-          { className: 'input-wrapper' },
-          _react2.default.createElement('input', {
-            className: 'full-width',
-            ref: function ref($input) {
-              return _this5.$input = $input;
-            },
-            type: type,
-            placeholder: placeholder,
-            onChange: this.handleInputChange
-          }),
-          !this.state.isValidated && _react2.default.createElement(
-            'div',
-            { className: 'icon x' },
-            '\u2716\uFE0F'
-          ),
-          this.state.isValidated && _react2.default.createElement(
-            'div',
-            { className: 'icon check' },
-            '\u2714\uFE0F'
-          )
-        )
-      );
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-      var buttonClassName = 'button full-width ' + (!this.state.isValidated && 'inactive');
-
-      return _react2.default.createElement(
-        'main',
-        { id: 'signup-view' },
-        _react2.default.createElement(
-          'h1',
-          null,
-          'Create an Account'
-        ),
-        _react2.default.createElement(
-          'section',
-          { className: 'signup-form' },
-          this.renderInput(),
-          _react2.default.createElement('br', null),
-          _react2.default.createElement(
-            'button',
-            { className: buttonClassName, onClick: this.handleClick },
-            'Next >'
-          )
-        )
-      );
-    }
-  }]);
-
-  return SignupView;
-}(_react2.default.Component);
-
-exports.default = SignupView;
-
-/***/ }),
+/* 268 */,
+/* 269 */,
 /* 270 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -32401,7 +32032,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _reactRedux = __webpack_require__(40);
 
-var _actions = __webpack_require__(57);
+var _actions = __webpack_require__(58);
 
 var _LoginView = __webpack_require__(257);
 
@@ -32440,7 +32071,7 @@ Object.defineProperty(exports, "__esModule", {
 
 var _reactRedux = __webpack_require__(40);
 
-var _actions = __webpack_require__(57);
+var _actions = __webpack_require__(58);
 
 var _MapView = __webpack_require__(262);
 
@@ -32532,47 +32163,7 @@ var UserViewContainer = (0, _reactRedux.connect)(mapStateToProps)(_UserView2.def
 exports.default = UserViewContainer;
 
 /***/ }),
-/* 275 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _react = __webpack_require__(2);
-
-var _react2 = _interopRequireDefault(_react);
-
-var _toCamelCase = __webpack_require__(284);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var generateFormGroup = function generateFormGroup(context, _ref) {
-  var label = _ref.label,
-      placeholder = _ref.placeholder;
-
-  var labelProperty = (0, _toCamelCase.toCamelCase)(label);
-
-  return _react2.default.createElement(
-    'div',
-    { className: 'form-group' },
-    _react2.default.createElement(
-      'label',
-      null,
-      label
-    ),
-    _react2.default.createElement('input', { className: 'form-control', ref: function ref(_label) {
-        return context[label] = _label;
-      }, placeholder: placeholder })
-  );
-};
-
-exports.default = generateFormGroup;
-
-/***/ }),
+/* 275 */,
 /* 276 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -32782,7 +32373,7 @@ var _redux = __webpack_require__(82);
 
 var _history = __webpack_require__(125);
 
-var _actions = __webpack_require__(57);
+var _actions = __webpack_require__(58);
 
 var _reducers = __webpack_require__(229);
 
@@ -32924,33 +32515,7 @@ var setStaticHeight = exports.setStaticHeight = function setStaticHeight($el) {
 };
 
 /***/ }),
-/* 284 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var toCamelCase = exports.toCamelCase = function toCamelCase(str) {
-  var parts = str.toLowerCase().split(' ');
-
-  var camelCase = '';
-
-  parts.forEach(function (part) {
-    part = Array.from(part);
-    var firstLetter = part[0];
-    var remaining = part.splice(1);
-
-    camelCase += firstLetter;
-    camelCase += remaining.join('');
-  });
-
-  return camelCase;
-};
-
-/***/ }),
+/* 284 */,
 /* 285 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -33917,7 +33482,7 @@ exports = module.exports = __webpack_require__(290)();
 
 
 // module
-exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 100%;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\n.small {\n  font-size: 12px;\n  color: #aaaaaa;\n  text-transform: none;\n}\n.content-wrapper {\n  position: relative;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\ninput:focus {\n  outline: none;\n}\n.view {\n  padding-bottom: 60px;\n  min-height: calc(100% - 60px);\n  box-sizing: border-box;\n}\n.view-content {\n  width: 85%;\n  margin: auto;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 100%;\n  height: 60px;\n  padding: 15px;\n  box-sizing: border-box;\n  z-index: 2;\n  display: flex;\n  justify-content: space-around;\n  background-color: #fff;\n}\n#header .nav-item {\n  width: 25%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-right: 1px solid #aaaaaa;\n}\n#header .nav-item:last-child {\n  border: none;\n}\n#header .nav-item .label {\n  font-size: 8px;\n}\n#home-view {\n  padding-top: 50px;\n}\n#home-view .onboarding-carousel {\n  margin: 30px 0;\n}\n#home-view .onboarding-carousel .slides-wrapper {\n  position: relative;\n  width: 200px;\n  height: 200px;\n  margin: auto;\n}\n#home-view .onboarding-carousel .slide {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n  opacity: 0;\n  transition: opacity 300ms ease-in-out;\n}\n#home-view .onboarding-carousel .slide.is-active {\n  opacity: 1;\n}\n#home-view .onboarding-carousel .slide:nth-child(odd) {\n  background-color: #f7f7f7;\n}\n#home-view .onboarding-carousel .slide:nth-child(even) {\n  background-color: #aaaaaa;\n}\n#home-view .onboarding-carousel .indicators-wrapper {\n  height: 5px;\n  padding: 10px 0;\n}\n#home-view .onboarding-carousel .indicator {\n  display: inline-block;\n  width: 5px;\n  height: 5px;\n  border-radius: 100%;\n  margin: 0 5px;\n  background-color: #aaaaaa;\n  transition: background-color 300ms ease-in-out;\n}\n#home-view .onboarding-carousel .indicator.is-active {\n  background-color: #3c3c3c;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#home-view hr {\n  margin: 20px 40%;\n  border: 1px solid #f7f7f7;\n}\n#home-view .log-in-prompt {\n  margin-top: 30px;\n}\n#home-view .log-in-prompt .log-in {\n  margin-left: 0.5ch;\n  color: #3c3c3c;\n  cursor: pointer;\n}\n#loading-view {\n  display: flex;\n  flex-direction: column;\n  align-content: center;\n  justify-content: center;\n}\n#login-view {\n  padding-top: 40px;\n}\n#login-view .illustration {\n  background-color: #f7f7f7;\n  width: 200px;\n  height: 200px;\n  margin: auto;\n}\n#login-view h1 {\n  margin: 20px auto;\n}\n#login-view .content-wrapper {\n  width: 85%;\n  margin: auto;\n}\n#login-view .input-wrapper {\n  position: relative;\n}\n#login-view .login-input {\n  width: 100%;\n  margin: 0;\n  border: 1px solid #f7f7f7;\n}\n#login-view .login-input:-webkit-autofill {\n  -webkit-box-shadow: 0 0 0px 1000px white inset;\n}\n#login-view .login-input.email {\n  border-top-left-radius: 5px;\n  border-top-right-radius: 5px;\n}\n#login-view .login-input.password {\n  border-top: none;\n  border-bottom-left-radius: 5px;\n  border-bottom-right-radius: 5px;\n}\n#login-view .forgot-password {\n  position: absolute;\n  right: 20px;\n  top: 36%;\n}\n#login-view .error-msg {\n  padding: 10px 0;\n  margin-top: 10px;\n  background-color: #f7f7f7;\n}\n#login-view .submit {\n  width: 100%;\n  margin-top: 30px;\n}\n#login-view hr {\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n  margin: 25px auto;\n}\n#login-view .facebook-login {\n  background-color: #39579A;\n}\n#login-view .sign-up-instruction {\n  margin-top: 30px;\n}\n#login-view .sign-up-instruction a {\n  font-weight: bold;\n  color: #3c3c3c;\n  cursor: pointer;\n}\n.pac-container {\n  width: 85% !important;\n}\n#map-view {\n  position: relative;\n  width: 100%;\n  height: calc(100% - 60px);\n  padding: 0;\n}\n#map-view .map-tools {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  background-color: white;\n  z-index: 1;\n}\n#map-view .map-tools .location-search {\n  width: 100%;\n  padding: 5px 10px;\n  box-sizing: border-box;\n}\n#map-view .map-tools .location-search .input-wrapper {\n  position: relative;\n  width: 110%;\n  margin: 5px 0;\n  transform-origin: 0 50%;\n  transform: scale(0.8);\n}\n#map-view .map-tools .location-search input {\n  width: 100%;\n  font-size: 16px;\n  padding: 10px 15px;\n  margin: 0;\n  border: 1px solid #f7f7f7;\n}\n#map-view .map-tools .location-search .use-current-location {\n  position: absolute;\n  top: 0;\n  right: 0;\n  width: 42px;\n  height: 42px;\n  cursor: pointer;\n  padding: 5px;\n  box-sizing: border-box;\n  transition: transform 500ms ease-in-out;\n}\n#map-view .map-tools .location-search .use-current-location .icon {\n  width: 100%;\n  height: 100%;\n  border-radius: 100%;\n  background-color: white;\n  background-size: 80%;\n  background-position: center;\n  background-repeat: no-repeat;\n  background-image: url(/assets/images/use-current-location.svg);\n}\n#map-view .map-tools .location-search .more {\n  position: absolute;\n  top: 13px;\n  right: 13px;\n  width: 30px;\n  height: 30px;\n  font-size: 18px;\n  letter-spacing: -0.1em;\n  font-family: 'Helvetica', sans-serif;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  margin-right: 0;\n  margin-left: auto;\n}\n#map-view .map-tools .reference {\n  border-top: 1px solid #f7f7f7;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px 0;\n}\n#map-view .map-tools .reference .type {\n  width: 25%;\n  border-right: 1px solid #f7f7f7;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#map-view .map-tools .reference .type:last-of-type {\n  border-right: none;\n}\n#map-view .map-tools .reference .type.yours .icon {\n  background-color: black;\n}\n#map-view .map-tools .reference .type.friends .icon {\n  background-color: white;\n}\n#map-view .map-tools .reference .type.popular .icon {\n  background-color: #aaaaaa;\n}\n#map-view .map-tools .reference .type .icon {\n  width: 11px;\n  height: 11px;\n  border-radius: 100%;\n  border: 1px solid #f7f7f7;\n  display: inline-block;\n  margin-right: 1ch;\n}\n#map-view .place-detail {\n  position: fixed;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n  background-color: #fff;\n  z-index: 1;\n}\n#map-view .place-detail .back {\n  position: absolute;\n  top: 20px;\n  left: 20px;\n}\n#map-view .place-detail .place-info {\n  text-align: center;\n  width: 100%;\n  height: 100%;\n  padding: 50px 20px;\n  box-sizing: border-box;\n}\n#map-view .place-detail .place-info h2 {\n  display: inline-block;\n}\n#map-view .place-detail .place-info .price-point {\n  display: inline-block;\n  color: #aaaaaa;\n  font-size: 14px;\n  font-weight: 200;\n  letter-spacing: 0.1em;\n  margin-left: 10px;\n}\n#map-view .place-detail .place-info .ratings {\n  margin: 30px auto;\n}\n#map-view .place-detail .place-info .rating {\n  display: inline-block;\n  vertical-align: top;\n  padding: 0 20px;\n  width: 60px;\n}\n#map-view .place-detail .place-info .rating:first-of-type {\n  border-right: 1px solid #f7f7f7;\n}\n#map-view .place-detail .place-info .rating h4 {\n  height: 46px;\n}\n#map-view .place-detail .place-info hr {\n  margin-top: 15px;\n  margin-bottom: 15px;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n}\n#map-view .place-preview {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding: 10px;\n  box-sizing: border-box;\n}\n#map-view .place-preview .place-preview-content {\n  text-align: left;\n  background-color: #fff;\n  border-radius: 3px;\n  padding: 10px;\n}\n#map-view .place-preview .place-preview-content hr {\n  margin-top: 15px;\n  margin-bottom: 15px;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n.place-list {\n  padding: 20px;\n}\n.place-list .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n  display: flex;\n  align-items: center;\n}\n.place-list .info {\n  flex-grow: 1;\n}\n.place-list button {\n  width: 75px;\n}\n.place-list .delete {\n  width: 20px;\n  height: 20px;\n  background-image: url(/assets/images/x.svg);\n  opacity: 0.6;\n}\n#search-view {\n  display: flex;\n  flex-direction: column;\n}\n#search-view .search-input {\n  width: 100%;\n  margin: 0;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-options {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .search-options .option {\n  width: 50%;\n  padding: 5px;\n}\n#search-view .search-options .option:first-child {\n  border-right: 1px solid #f7f7f7;\n}\n#search-view .search-options .option[data-active=\"true\"] {\n  color: black;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n  margin: auto 0;\n}\n#search-view .search-results.has-results {\n  margin: 0 0;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n#signup-view .signup-form .input-wrapper {\n  position: relative;\n}\n#signup-view .signup-form .icon {\n  position: absolute;\n  top: 0;\n  right: 0;\n}\n.user-list {\n  padding: 20px;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(225) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view {\n  padding-top: 20px;\n}\n#user-view .edit-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(225) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n", ""]);
+exports.push([module.i, "* {\n  margin: 0;\n  padding: 0;\n}\n* {\n  font-family: 'Sneak', sans-serif;\n  line-height: 1.3em;\n}\nmain {\n  width: 100%;\n  margin: 0 auto;\n  text-align: center;\n}\nbutton {\n  border: none;\n  box-sizing: border-box;\n}\ninput {\n  box-sizing: border-box;\n  font-size: 16px;\n}\nh1 {\n  font-size: 22px;\n}\nh3 {\n  font-size: 18px;\n  font-weight: 500;\n}\nh4 {\n  font-size: 36px;\n  font-weight: 200;\n}\nh5 {\n  font-weight: 500;\n  font-size: 12px;\n  letter-spacing: 0.02em;\n}\nh6 {\n  text-transform: uppercase;\n  color: #aaaaaa;\n  font-weight: 300;\n  font-size: 13px;\n}\na {\n  color: inherit;\n  text-decoration: none;\n}\n.label {\n  font-size: 10px;\n  text-transform: uppercase;\n  color: #aaaaaa;\n  letter-spacing: 0.1em;\n}\n.small {\n  font-size: 12px;\n  color: #aaaaaa;\n  text-transform: none;\n}\n.content-wrapper {\n  position: relative;\n}\nbutton,\n.button {\n  background-color: #3c3c3c;\n  color: #fff;\n  padding: 15px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  cursor: pointer;\n}\nbutton.full-width,\n.button.full-width {\n  width: 100%;\n}\nbutton.knockout,\n.button.knockout {\n  color: #3c3c3c;\n  background-color: #fff;\n  border: 1px solid #3c3c3c;\n}\nbutton.inactive,\n.button.inactive {\n  opacity: 0.7;\n  pointer-events: none;\n}\ninput {\n  padding: 15px 25px;\n  margin-top: 5px;\n  margin-bottom: 5px;\n  color: #3c3c3c;\n  border: 1px solid #3c3c3c;\n}\ninput.full-width {\n  width: 100%;\n}\ninput:focus {\n  outline: none;\n}\n.view {\n  padding-bottom: 60px;\n  min-height: calc(100% - 60px);\n  box-sizing: border-box;\n}\n.view-content {\n  width: 85%;\n  margin: auto;\n}\n#header {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  margin: auto;\n  width: 100%;\n  height: 60px;\n  padding: 15px;\n  box-sizing: border-box;\n  z-index: 2;\n  display: flex;\n  justify-content: space-around;\n  background-color: #fff;\n}\n#header .nav-item {\n  width: 25%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  border-right: 1px solid #aaaaaa;\n}\n#header .nav-item:last-child {\n  border: none;\n}\n#header .nav-item .label {\n  font-size: 8px;\n}\n#home-view {\n  padding-top: 50px;\n}\n#home-view .onboarding-carousel {\n  margin: 30px 0;\n}\n#home-view .onboarding-carousel .slides-wrapper {\n  position: relative;\n  width: 200px;\n  height: 200px;\n  margin: auto;\n}\n#home-view .onboarding-carousel .slide {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n  opacity: 0;\n  transition: opacity 300ms ease-in-out;\n}\n#home-view .onboarding-carousel .slide.is-active {\n  opacity: 1;\n}\n#home-view .onboarding-carousel .slide:nth-child(odd) {\n  background-color: #f7f7f7;\n}\n#home-view .onboarding-carousel .slide:nth-child(even) {\n  background-color: #aaaaaa;\n}\n#home-view .onboarding-carousel .indicators-wrapper {\n  height: 5px;\n  padding: 10px 0;\n}\n#home-view .onboarding-carousel .indicator {\n  display: inline-block;\n  width: 5px;\n  height: 5px;\n  border-radius: 100%;\n  margin: 0 5px;\n  background-color: #aaaaaa;\n  transition: background-color 300ms ease-in-out;\n}\n#home-view .onboarding-carousel .indicator.is-active {\n  background-color: #3c3c3c;\n}\n#home-view .button.facebook {\n  background-color: #39579A;\n}\n#home-view hr {\n  margin: 20px 40%;\n  border: 1px solid #f7f7f7;\n}\n#home-view .log-in-prompt {\n  margin-top: 30px;\n}\n#home-view .log-in-prompt .log-in {\n  margin-left: 0.5ch;\n  color: #3c3c3c;\n  cursor: pointer;\n}\n#join-view {\n  padding-top: 50px;\n}\n#join-view .account-form {\n  margin-top: 50px;\n}\n#join-view .account-form input {\n  width: 100%;\n  margin: 10px auto;\n}\n#join-view .account-form .check {\n  font-size: 12px;\n  line-height: 2em;\n  text-align: left;\n}\n#join-view .account-form .check .icon {\n  display: inline-block;\n  vertical-align: middle;\n  width: 10px;\n  height: 10px;\n  border-radius: 100%;\n  margin-right: 5px;\n  margin-top: -3px;\n  background: #aaaaaa;\n}\n#join-view .account-form .check .icon[data-is-valid=\"true\"] {\n  background-color: green;\n}\n#join-view .account-form button {\n  width: 100%;\n  margin: 10px auto;\n  opacity: 0.5;\n}\n#join-view .account-form button[data-is-valid=\"true\"] {\n  opacity: 1;\n}\n#loading-view {\n  display: flex;\n  flex-direction: column;\n  align-content: center;\n  justify-content: center;\n}\n#login-view {\n  padding-top: 40px;\n}\n#login-view .illustration {\n  background-color: #f7f7f7;\n  width: 200px;\n  height: 200px;\n  margin: auto;\n}\n#login-view h1 {\n  margin: 20px auto;\n}\n#login-view .content-wrapper {\n  width: 85%;\n  margin: auto;\n}\n#login-view .input-wrapper {\n  position: relative;\n}\n#login-view .login-input {\n  width: 100%;\n  margin: 0;\n  border: 1px solid #f7f7f7;\n}\n#login-view .login-input:-webkit-autofill {\n  -webkit-box-shadow: 0 0 0px 1000px white inset;\n}\n#login-view .login-input.email {\n  border-top-left-radius: 5px;\n  border-top-right-radius: 5px;\n}\n#login-view .login-input.password {\n  border-top: none;\n  border-bottom-left-radius: 5px;\n  border-bottom-right-radius: 5px;\n}\n#login-view .forgot-password {\n  position: absolute;\n  right: 20px;\n  top: 36%;\n}\n#login-view .error-msg {\n  padding: 10px 0;\n  margin-top: 10px;\n  background-color: #f7f7f7;\n}\n#login-view .submit {\n  width: 100%;\n  margin-top: 30px;\n}\n#login-view hr {\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n  margin: 25px auto;\n}\n#login-view .facebook-login {\n  background-color: #39579A;\n}\n#login-view .sign-up-instruction {\n  margin-top: 30px;\n}\n#login-view .sign-up-instruction a {\n  font-weight: bold;\n  color: #3c3c3c;\n  cursor: pointer;\n}\n.pac-container {\n  width: 85% !important;\n}\n#map-view {\n  position: relative;\n  width: 100%;\n  height: calc(100% - 60px);\n  padding: 0;\n}\n#map-view .map-tools {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width: 100%;\n  background-color: white;\n  z-index: 1;\n}\n#map-view .map-tools .location-search {\n  width: 100%;\n  padding: 5px 10px;\n  box-sizing: border-box;\n}\n#map-view .map-tools .location-search .input-wrapper {\n  position: relative;\n  width: 110%;\n  margin: 5px 0;\n  transform-origin: 0 50%;\n  transform: scale(0.8);\n}\n#map-view .map-tools .location-search input {\n  width: 100%;\n  font-size: 16px;\n  padding: 10px 15px;\n  margin: 0;\n  border: 1px solid #f7f7f7;\n}\n#map-view .map-tools .location-search .use-current-location {\n  position: absolute;\n  top: 0;\n  right: 0;\n  width: 42px;\n  height: 42px;\n  cursor: pointer;\n  padding: 5px;\n  box-sizing: border-box;\n  transition: transform 500ms ease-in-out;\n}\n#map-view .map-tools .location-search .use-current-location .icon {\n  width: 100%;\n  height: 100%;\n  border-radius: 100%;\n  background-color: white;\n  background-size: 80%;\n  background-position: center;\n  background-repeat: no-repeat;\n  background-image: url(/assets/images/use-current-location.svg);\n}\n#map-view .map-tools .location-search .more {\n  position: absolute;\n  top: 13px;\n  right: 13px;\n  width: 30px;\n  height: 30px;\n  font-size: 18px;\n  letter-spacing: -0.1em;\n  font-family: 'Helvetica', sans-serif;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  margin-right: 0;\n  margin-left: auto;\n}\n#map-view .map-tools .reference {\n  border-top: 1px solid #f7f7f7;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px 0;\n}\n#map-view .map-tools .reference .type {\n  width: 25%;\n  border-right: 1px solid #f7f7f7;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#map-view .map-tools .reference .type:last-of-type {\n  border-right: none;\n}\n#map-view .map-tools .reference .type.yours .icon {\n  background-color: black;\n}\n#map-view .map-tools .reference .type.friends .icon {\n  background-color: white;\n}\n#map-view .map-tools .reference .type.popular .icon {\n  background-color: #aaaaaa;\n}\n#map-view .map-tools .reference .type .icon {\n  width: 11px;\n  height: 11px;\n  border-radius: 100%;\n  border: 1px solid #f7f7f7;\n  display: inline-block;\n  margin-right: 1ch;\n}\n#map-view .place-detail {\n  position: fixed;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n  background-color: #fff;\n  z-index: 1;\n}\n#map-view .place-detail .back {\n  position: absolute;\n  top: 20px;\n  left: 20px;\n}\n#map-view .place-detail .place-info {\n  text-align: center;\n  width: 100%;\n  height: 100%;\n  padding: 50px 20px;\n  box-sizing: border-box;\n}\n#map-view .place-detail .place-info h2 {\n  display: inline-block;\n}\n#map-view .place-detail .place-info .price-point {\n  display: inline-block;\n  color: #aaaaaa;\n  font-size: 14px;\n  font-weight: 200;\n  letter-spacing: 0.1em;\n  margin-left: 10px;\n}\n#map-view .place-detail .place-info .ratings {\n  margin: 30px auto;\n}\n#map-view .place-detail .place-info .rating {\n  display: inline-block;\n  vertical-align: top;\n  padding: 0 20px;\n  width: 60px;\n}\n#map-view .place-detail .place-info .rating:first-of-type {\n  border-right: 1px solid #f7f7f7;\n}\n#map-view .place-detail .place-info .rating h4 {\n  height: 46px;\n}\n#map-view .place-detail .place-info hr {\n  margin-top: 15px;\n  margin-bottom: 15px;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n#map-view #google-maps {\n  width: 100%;\n  height: 100%;\n}\n#map-view .place-preview {\n  position: absolute;\n  bottom: 0;\n  left: 0;\n  width: 100%;\n  padding: 10px;\n  box-sizing: border-box;\n}\n#map-view .place-preview .place-preview-content {\n  text-align: left;\n  background-color: #fff;\n  border-radius: 3px;\n  padding: 10px;\n}\n#map-view .place-preview .place-preview-content hr {\n  margin-top: 15px;\n  margin-bottom: 15px;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n.place-list {\n  padding: 20px;\n}\n.place-list .place {\n  padding-top: 20px;\n  padding-bottom: 20px;\n  border-bottom: 1px solid #f7f7f7;\n  text-align: left;\n  display: flex;\n  align-items: center;\n}\n.place-list .info {\n  flex-grow: 1;\n}\n.place-list button {\n  width: 75px;\n}\n.place-list .delete {\n  width: 20px;\n  height: 20px;\n  background-image: url(/assets/images/x.svg);\n  opacity: 0.6;\n}\n#search-view {\n  display: flex;\n  flex-direction: column;\n}\n#search-view .search-input {\n  width: 100%;\n  margin: 0;\n  border: none;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .instructions {\n  height: 100%;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n#search-view .search-options {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 10px;\n  border-bottom: 1px solid #f7f7f7;\n}\n#search-view .search-options .option {\n  width: 50%;\n  padding: 5px;\n}\n#search-view .search-options .option:first-child {\n  border-right: 1px solid #f7f7f7;\n}\n#search-view .search-options .option[data-active=\"true\"] {\n  color: black;\n}\n#search-view .search-results {\n  max-height: 100%;\n  overflow: scroll;\n  margin: auto 0;\n}\n#search-view .search-results.has-results {\n  margin: 0 0;\n}\n#search-view .result {\n  display: flex;\n  align-items: center;\n  text-align: left;\n  border-bottom: 1px solid #f7f7f7;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#search-view .result h3 {\n  vertical-align: middle;\n  font-size: 90%;\n}\n#search-view .result button {\n  vertical-align: middle;\n  margin: 0;\n  margin-right: 0;\n  margin-left: auto;\n  padding: 10px 15px;\n  width: 65px;\n}\n.user-list {\n  padding: 20px;\n}\n.user-list .user {\n  display: flex;\n  align-items: center;\n  padding: 15px 0;\n  border-bottom: 1px solid #f7f7f7;\n}\n.user-list .user .profile-picture {\n  width: 50px;\n  height: 50px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(225) + ");\n  margin-right: 15px;\n}\n.user-list .user .info {\n  text-align: left;\n}\n#user-view {\n  padding-top: 20px;\n}\n#user-view .edit-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .follow-profile {\n  position: absolute;\n  top: 15px;\n  right: 15px;\n}\n#user-view .profile-picture {\n  width: 100px;\n  height: 100px;\n  border-radius: 100%;\n  background-size: cover;\n  background-position: center;\n  background-image: url(" + __webpack_require__(225) + ");\n  margin: auto;\n}\n#user-view .stats {\n  display: flex;\n  justify-content: space-between;\n  padding-top: 20px;\n  padding-bottom: 20px;\n}\n#user-view .stats .stats-places,\n#user-view .stats .stats-followers,\n#user-view .stats .stats-following {\n  flex: 1;\n}\n", ""]);
 
 // exports
 
@@ -36438,7 +36003,7 @@ var _validation = __webpack_require__(33);
 
 var _obj = __webpack_require__(7);
 
-var _nodeFromJSON = __webpack_require__(50);
+var _nodeFromJSON = __webpack_require__(51);
 
 var _ChildrenNode = __webpack_require__(16);
 
@@ -40334,7 +39899,7 @@ var _assert = __webpack_require__(4);
 
 var _util = __webpack_require__(5);
 
-var _KeyIndex = __webpack_require__(49);
+var _KeyIndex = __webpack_require__(50);
 
 var _PriorityIndex = __webpack_require__(13);
 
@@ -40985,7 +40550,7 @@ var _Change = __webpack_require__(42);
 
 var _ChildrenNode = __webpack_require__(16);
 
-var _KeyIndex = __webpack_require__(49);
+var _KeyIndex = __webpack_require__(50);
 
 var _ImmutableTree = __webpack_require__(92);
 
@@ -46492,7 +46057,7 @@ var _invariant2 = _interopRequireDefault(_invariant);
 
 var _LocationUtils = __webpack_require__(101);
 
-var _PathUtils = __webpack_require__(51);
+var _PathUtils = __webpack_require__(52);
 
 var _createTransitionManager = __webpack_require__(102);
 
@@ -46803,7 +46368,7 @@ var _invariant2 = _interopRequireDefault(_invariant);
 
 var _LocationUtils = __webpack_require__(101);
 
-var _PathUtils = __webpack_require__(51);
+var _PathUtils = __webpack_require__(52);
 
 var _createTransitionManager = __webpack_require__(102);
 
@@ -47129,7 +46694,7 @@ var _warning = __webpack_require__(12);
 
 var _warning2 = _interopRequireDefault(_warning);
 
-var _PathUtils = __webpack_require__(51);
+var _PathUtils = __webpack_require__(52);
 
 var _LocationUtils = __webpack_require__(101);
 
@@ -47298,7 +46863,7 @@ exports.default = createMemoryHistory;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_invariant__ = __webpack_require__(22);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_invariant___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_invariant__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LocationUtils__ = __webpack_require__(70);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__PathUtils__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__PathUtils__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__createTransitionManager__ = __webpack_require__(103);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__DOMUtils__ = __webpack_require__(178);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -47602,7 +47167,7 @@ var createBrowserHistory = function createBrowserHistory() {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_invariant__ = __webpack_require__(22);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_invariant___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_invariant__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LocationUtils__ = __webpack_require__(70);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__PathUtils__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__PathUtils__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__createTransitionManager__ = __webpack_require__(103);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__DOMUtils__ = __webpack_require__(178);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -47920,7 +47485,7 @@ var createHashHistory = function createHashHistory() {
 "use strict";
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_warning__ = __webpack_require__(12);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_warning___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_warning__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__PathUtils__ = __webpack_require__(52);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__PathUtils__ = __webpack_require__(53);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__LocationUtils__ = __webpack_require__(70);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__createTransitionManager__ = __webpack_require__(103);
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -51737,7 +51302,7 @@ module.exports = AutoFocusUtils;
 
 
 
-var EventPropagators = __webpack_require__(54);
+var EventPropagators = __webpack_require__(55);
 var ExecutionEnvironment = __webpack_require__(11);
 var FallbackCompositionState = __webpack_require__(450);
 var SyntheticCompositionEvent = __webpack_require__(493);
@@ -52347,8 +51912,8 @@ module.exports = CSSPropertyOperations;
 
 
 
-var EventPluginHub = __webpack_require__(53);
-var EventPropagators = __webpack_require__(54);
+var EventPluginHub = __webpack_require__(54);
+var EventPropagators = __webpack_require__(55);
 var ExecutionEnvironment = __webpack_require__(11);
 var ReactDOMComponentTree = __webpack_require__(10);
 var ReactUpdates = __webpack_require__(26);
@@ -52747,7 +52312,7 @@ module.exports = DefaultEventPluginOrder;
 
 
 
-var EventPropagators = __webpack_require__(54);
+var EventPropagators = __webpack_require__(55);
 var ReactDOMComponentTree = __webpack_require__(10);
 var SyntheticMouseEvent = __webpack_require__(77);
 
@@ -53390,7 +52955,7 @@ var React = __webpack_require__(47);
 var ReactComponentEnvironment = __webpack_require__(111);
 var ReactCurrentOwner = __webpack_require__(27);
 var ReactErrorUtils = __webpack_require__(112);
-var ReactInstanceMap = __webpack_require__(55);
+var ReactInstanceMap = __webpack_require__(56);
 var ReactInstrumentation = __webpack_require__(23);
 var ReactNodeTypes = __webpack_require__(197);
 var ReactReconciler = __webpack_require__(46);
@@ -54417,7 +53982,7 @@ var DOMLazyTree = __webpack_require__(45);
 var DOMNamespaces = __webpack_require__(107);
 var DOMProperty = __webpack_require__(31);
 var DOMPropertyOperations = __webpack_require__(189);
-var EventPluginHub = __webpack_require__(53);
+var EventPluginHub = __webpack_require__(54);
 var EventPluginRegistry = __webpack_require__(75);
 var ReactBrowserEventEmitter = __webpack_require__(76);
 var ReactDOMComponentFlags = __webpack_require__(190);
@@ -57524,7 +57089,7 @@ module.exports = REACT_ELEMENT_TYPE;
 
 
 
-var EventPluginHub = __webpack_require__(53);
+var EventPluginHub = __webpack_require__(54);
 
 function runEventQueueInBatch(events) {
   EventPluginHub.enqueueEvents(events);
@@ -57761,7 +57326,7 @@ module.exports = ReactHostOperationHistoryHook;
 
 
 var DOMProperty = __webpack_require__(31);
-var EventPluginHub = __webpack_require__(53);
+var EventPluginHub = __webpack_require__(54);
 var EventPluginUtils = __webpack_require__(108);
 var ReactComponentEnvironment = __webpack_require__(111);
 var ReactEmptyComponent = __webpack_require__(192);
@@ -57900,7 +57465,7 @@ module.exports = ReactMarkupChecksum;
 var _prodInvariant = __webpack_require__(6);
 
 var ReactComponentEnvironment = __webpack_require__(111);
-var ReactInstanceMap = __webpack_require__(55);
+var ReactInstanceMap = __webpack_require__(56);
 var ReactInstrumentation = __webpack_require__(23);
 
 var ReactCurrentOwner = __webpack_require__(27);
@@ -59324,7 +58889,7 @@ module.exports = SVGDOMPropertyConfig;
 
 
 
-var EventPropagators = __webpack_require__(54);
+var EventPropagators = __webpack_require__(55);
 var ExecutionEnvironment = __webpack_require__(11);
 var ReactDOMComponentTree = __webpack_require__(10);
 var ReactInputSelection = __webpack_require__(195);
@@ -59521,7 +59086,7 @@ module.exports = SelectEventPlugin;
 var _prodInvariant = __webpack_require__(6);
 
 var EventListener = __webpack_require__(136);
-var EventPropagators = __webpack_require__(54);
+var EventPropagators = __webpack_require__(55);
 var ReactDOMComponentTree = __webpack_require__(10);
 var SyntheticAnimationEvent = __webpack_require__(491);
 var SyntheticClipboardEvent = __webpack_require__(492);
@@ -59532,7 +59097,7 @@ var SyntheticMouseEvent = __webpack_require__(77);
 var SyntheticDragEvent = __webpack_require__(494);
 var SyntheticTouchEvent = __webpack_require__(498);
 var SyntheticTransitionEvent = __webpack_require__(499);
-var SyntheticUIEvent = __webpack_require__(56);
+var SyntheticUIEvent = __webpack_require__(57);
 var SyntheticWheelEvent = __webpack_require__(500);
 
 var emptyFunction = __webpack_require__(19);
@@ -59918,7 +59483,7 @@ module.exports = SyntheticDragEvent;
 
 
 
-var SyntheticUIEvent = __webpack_require__(56);
+var SyntheticUIEvent = __webpack_require__(57);
 
 /**
  * @interface FocusEvent
@@ -60001,7 +59566,7 @@ module.exports = SyntheticInputEvent;
 
 
 
-var SyntheticUIEvent = __webpack_require__(56);
+var SyntheticUIEvent = __webpack_require__(57);
 
 var getEventCharCode = __webpack_require__(115);
 var getEventKey = __webpack_require__(506);
@@ -60090,7 +59655,7 @@ module.exports = SyntheticKeyboardEvent;
 
 
 
-var SyntheticUIEvent = __webpack_require__(56);
+var SyntheticUIEvent = __webpack_require__(57);
 
 var getEventModifierState = __webpack_require__(116);
 
@@ -60471,7 +60036,7 @@ var _prodInvariant = __webpack_require__(6);
 
 var ReactCurrentOwner = __webpack_require__(27);
 var ReactDOMComponentTree = __webpack_require__(10);
-var ReactInstanceMap = __webpack_require__(55);
+var ReactInstanceMap = __webpack_require__(56);
 
 var getHostComponentFromComposite = __webpack_require__(202);
 var invariant = __webpack_require__(1);
@@ -62309,7 +61874,7 @@ Redirect.contextTypes = {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_2_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_prop_types__ = __webpack_require__(14);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_3_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_history_PathUtils__ = __webpack_require__(51);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_history_PathUtils__ = __webpack_require__(52);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_4_history_PathUtils___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_4_history_PathUtils__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__Router__ = __webpack_require__(122);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -64538,6 +64103,289 @@ __webpack_require__(551);
 exports.setImmediate = setImmediate;
 exports.clearImmediate = clearImmediate;
 
+
+/***/ }),
+/* 557 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(2);
+
+var _react2 = _interopRequireDefault(_react);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Carousel = function (_React$Component) {
+  _inherits(Carousel, _React$Component);
+
+  function Carousel(props) {
+    _classCallCheck(this, Carousel);
+
+    var _this = _possibleConstructorReturn(this, (Carousel.__proto__ || Object.getPrototypeOf(Carousel)).call(this, props));
+
+    _this.state = {
+      carouselIndex: 0
+    };
+    return _this;
+  }
+
+  _createClass(Carousel, [{
+    key: 'componentDidMount',
+    value: function componentDidMount() {
+      var _this2 = this;
+
+      this.$slides = this.$carousel.children;
+      this.numOfSlides = this.$slides.length;
+
+      this.carouselInterval = setInterval(function () {
+        _this2.nextSlide();
+      }, 3000);
+    }
+  }, {
+    key: 'componentWillUnmount',
+    value: function componentWillUnmount() {
+      clearInterval(this.carouselInterval);
+    }
+  }, {
+    key: 'nextSlide',
+    value: function nextSlide() {
+      var carouselIndex = (this.state.carouselIndex + 1) % this.numOfSlides;
+      this.setState({ carouselIndex: carouselIndex });
+    }
+  }, {
+    key: 'renderCarousel',
+    value: function renderCarousel() {
+      var _this3 = this;
+
+      var slides = ['', '', '', ''];
+
+      var $slides = slides.map(function (slide, i) {
+        var isActive = _this3.state.carouselIndex === i;
+        return _react2.default.createElement('div', { className: 'slide ' + (isActive ? 'is-active' : ''), key: i });
+      });
+
+      var $indicators = slides.map(function (slide, i) {
+        var isActive = _this3.state.carouselIndex === i;
+        return _react2.default.createElement('div', { className: 'indicator ' + (isActive ? 'is-active' : ''), key: i });
+      });
+
+      return _react2.default.createElement(
+        'div',
+        {
+          className: 'onboarding-carousel',
+          ref: function ref($c) {
+            return _this3.$carousel = $c;
+          }
+        },
+        _react2.default.createElement(
+          'div',
+          { className: 'slides-wrapper' },
+          $slides
+        ),
+        _react2.default.createElement(
+          'div',
+          { className: 'indicators-wrapper' },
+          $indicators
+        )
+      );
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      return this.renderCarousel();
+    }
+  }]);
+
+  return Carousel;
+}(_react2.default.Component);
+
+exports.default = Carousel;
+
+/***/ }),
+/* 558 */,
+/* 559 */,
+/* 560 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(2);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _user = __webpack_require__(15);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var regex = new RegExp(/^([a-zA-Z0-9_])*$/);
+
+var JoinView = function (_React$Component) {
+  _inherits(JoinView, _React$Component);
+
+  function JoinView(props) {
+    _classCallCheck(this, JoinView);
+
+    var _this = _possibleConstructorReturn(this, (JoinView.__proto__ || Object.getPrototypeOf(JoinView)).call(this, props));
+
+    _this.handleClick = _this.handleClick.bind(_this);
+    _this.handleInputChange = _this.handleInputChange.bind(_this);
+
+    _this.state = {
+      username: '',
+      isSearching: false,
+      isAvailable: false,
+      isAlphanumeric: false,
+      isLongEnough: false
+    };
+    return _this;
+  }
+
+  _createClass(JoinView, [{
+    key: 'handleClick',
+    value: function handleClick() {
+      var _this2 = this;
+
+      var handleSuccess = function handleSuccess(uid) {
+        (0, _user.getUser)(uid).then(function (snapshot) {
+          var user = snapshot.val();
+        });
+      };
+
+      var handleErr = function handleErr() {
+        _this2.props.history.push('/');
+      };
+
+      (0, _user.createUserFromFacebookRedirect)(this.state.username, handleSuccess, handleErr);
+    }
+  }, {
+    key: 'handleInputChange',
+    value: function handleInputChange(e) {
+      var _this3 = this;
+
+      var username = e.target.value.trim();
+
+      this.setState({
+        username: username,
+        isSearching: true,
+        isLongEnough: username.length > 3 && username.length < 17,
+        isAlphanumeric: !!username.match(regex)
+      });
+
+      (0, _user.findUserByExactUsername)(username).then(function (snapshot) {
+        // If, by this point, we have a different input value, quit.
+        if (username !== _this3.state.username) return;
+
+        var user = snapshot.val();
+
+        _this3.setState({
+          isSearching: false,
+          isAvailable: !user
+        });
+      });
+    }
+  }, {
+    key: 'renderValidation',
+    value: function renderValidation() {
+      var _state = this.state,
+          isAvailable = _state.isAvailable,
+          isAlphanumeric = _state.isAlphanumeric,
+          isLongEnough = _state.isLongEnough;
+
+
+      return _react2.default.createElement(
+        'div',
+        { className: 'validation' },
+        _react2.default.createElement(
+          'div',
+          { className: 'check is-available' },
+          _react2.default.createElement('span', { className: 'icon', 'data-is-valid': isAvailable }),
+          'Must be available.'
+        ),
+        _react2.default.createElement(
+          'div',
+          { className: 'check is-alphanumeric' },
+          _react2.default.createElement('span', { className: 'icon', 'data-is-valid': isAlphanumeric }),
+          'Must be only letters, numbers, or underscores.'
+        ),
+        _react2.default.createElement(
+          'div',
+          { className: 'check is-long-enough' },
+          _react2.default.createElement('span', { className: 'icon', 'data-is-valid': isLongEnough }),
+          'Must be between 3 and 16 characters long.'
+        )
+      );
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      var isValid = this.state.isAvailable && this.state.isLongEnough && this.state.isAlphanumeric && !this.state.isSearching;
+
+      return _react2.default.createElement(
+        'main',
+        { id: 'join-view', className: 'view' },
+        _react2.default.createElement(
+          'div',
+          { className: 'view-content' },
+          _react2.default.createElement(
+            'h1',
+            null,
+            'Create Your Account'
+          ),
+          _react2.default.createElement(
+            'div',
+            { className: 'account-form' },
+            _react2.default.createElement(
+              'div',
+              { className: 'input-wrapper' },
+              _react2.default.createElement('input', { type: 'text', onChange: this.handleInputChange, value: this.state.username })
+            ),
+            this.renderValidation(),
+            _react2.default.createElement(
+              'button',
+              {
+                className: 'create-account',
+                'data-is-valid': isValid,
+                onClick: this.handleClick
+              },
+              'Create Account'
+            )
+          )
+        )
+      );
+    }
+  }]);
+
+  return JoinView;
+}(_react2.default.Component);
+
+exports.default = JoinView;
 
 /***/ })
 /******/ ]);
