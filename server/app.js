@@ -13,7 +13,7 @@ const HTML = path.join( __dirname, '../public/index.html' )
 app.set( 'port', process.env.PORT || 3000 )
 app.use( express.static( PUBLIC_DIRECTORY ))
 
-app.get( '/yelp-rating', ( req, res ) => {
+app.get( '/yelp-data', ( req, res ) => {
   yelp.accessToken( YELP_ID, YELP_SECRET )
   .then(( response ) => {
     const client = yelp.client( response.jsonBody.access_token )

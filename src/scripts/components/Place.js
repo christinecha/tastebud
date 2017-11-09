@@ -1,5 +1,6 @@
 import React from 'react'
-import { addUserToPlace, removeUserFromPlace, newPlace } from '../db/place'
+import axios from 'axios'
+import { addUserToPlace, removeUserFromPlace, newPlace, updatePlace } from '../db/place'
 import { updateUser, addPlaceToUser, removePlaceFromUser } from '../db/user'
 
 class Place extends React.Component {
@@ -72,12 +73,38 @@ class Place extends React.Component {
         vicinity: place.vicinity,
       }
 
-      newPlace( placeData ).then(( placeId ) => {
+      newPlace( placeData )
+      .then(( placeId ) => {
+        this.addYelpDataToPlace( placeData )
         this.updateAddedPlaceAndUser( placeId )
         .then(() => {
           this.props.history.push( `/users/${ this.props.currentUser.uid }` )
         })
       })
+    })
+  }
+
+  addYelpDataToPlace( place ) {
+    const searchRequest = {
+      params: {
+        term: place.name,
+        latitude: place.lat,
+        longitude: place.lng,
+      },
+    }
+
+    axios.get( '/yelp-data', searchRequest )
+    .then(( response ) => {
+      const { data } = response
+      const yelpCategories = data.categories.map(( category ) => category.title )
+      const yelpRating = data.rating.toFixed( 1 )
+
+      const yelpData = {
+        yelpRating,
+        yelpCategories,
+      }
+      this.setState( yelpData )
+      updatePlace( place.id, yelpData )
     })
   }
 

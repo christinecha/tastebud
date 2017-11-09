@@ -19,8 +19,11 @@ class PlaceDetail extends React.Component {
   setYelpRating() {
     const { activePlace } = this.props
 
-    if ( activePlace.yelpRating ) {
-      this.setState({ yelpRating: activePlace.yelpRating })
+    if ( activePlace.yelpRating && activePlace.yelpCategories ) {
+      this.setState({
+        yelpRating: activePlace.yelpRating,
+        yelpCategories: activePlace.yelpCategories,
+      })
       return
     }
 
@@ -32,12 +35,34 @@ class PlaceDetail extends React.Component {
       },
     }
 
-    axios.get( '/yelp-rating', searchRequest )
+    axios.get( '/yelp-data', searchRequest )
     .then(( response ) => {
-      const yelpRating = response.data.rating.toFixed( 1 )
-      this.setState({ yelpRating })
-      updatePlace( activePlace.id, { yelpRating })
+      const { data } = response
+      const yelpCategories = data.categories.map(( category ) => category.title )
+      const yelpRating = data.rating.toFixed( 1 )
+
+      const yelpData = {
+        yelpRating,
+        yelpCategories,
+      }
+      this.setState( yelpData )
+      updatePlace( activePlace.id, yelpData )
     })
+  }
+
+  renderYelpCategories() {
+    const { yelpCategories } = this.state
+    if ( !yelpCategories ) return
+
+    const categories = yelpCategories.map(( category, i ) => {
+      return (
+        <div className='yelp-category label' key={i}>{category}</div>
+      )
+    })
+
+    return (
+      <div className='yelp-categories'>{categories}</div>
+    )
   }
 
   render () {
@@ -46,6 +71,7 @@ class PlaceDetail extends React.Component {
     if ( !activePlace ) return null
 
     const { pricePoint, rating, vicinity } = activePlace
+    const { yelpRating } = this.state
 
     const latLng = {
       lat: activePlace.lat,
@@ -64,10 +90,11 @@ class PlaceDetail extends React.Component {
           <h2>{activePlace.name}</h2>
           <p className='price-point'>{dollarSigns}</p>
           <p className='label'>{vicinity} ({distance})</p>
+          {this.renderYelpCategories()}
           <div className='ratings'>
             <div className='rating'>
               <p className='label'>Yelp</p>
-              <h4>{this.state.yelpRating}</h4>
+              <h4>{yelpRating}</h4>
             </div>
             <div className='rating'>
               <p className='label'>Google</p>
