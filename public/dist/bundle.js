@@ -16622,7 +16622,9 @@ var UserView = function (_React$Component) {
           'edit'
         );
       }
-      var canFollow = currentUser.following.indexOf(user.uid) < 0;
+
+      var following = currentUser.following || [];
+      var canFollow = following.indexOf(user.uid) < 0;
 
       var onClick = canFollow ? this.followUser : this.unfollowUser;
       var text = canFollow ? 'follow' : 'unfollow';

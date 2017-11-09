@@ -155,7 +155,9 @@ class UserView extends React.Component {
         </button>
       )
     }
-    const canFollow = currentUser.following.indexOf( user.uid ) < 0
+
+    const following = currentUser.following || []
+    const canFollow = following.indexOf( user.uid ) < 0
 
     const onClick = canFollow ? this.followUser : this.unfollowUser
     const text = canFollow ? 'follow' : 'unfollow'
