@@ -97,6 +97,17 @@
         align-items: center;
         justify-content: center;
 
+        user-select: none;
+        cursor: pointer;
+
+        opacity: 0.2;
+
+        transition: opacity 600ms ease-in-out;
+
+        &.is-active {
+          opacity: 1;
+        }
+
         &:last-of-type { border-right: none; }
 
         &.yours .icon { background-color: black; }

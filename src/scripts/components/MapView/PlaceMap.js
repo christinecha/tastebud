@@ -11,6 +11,7 @@ class PlaceMap extends React.Component {
     super( props )
 
     this.state = {
+      placesByFilter: {},
       places: [],
       markers: [],
       activePlaceIndex: null,
@@ -19,8 +20,8 @@ class PlaceMap extends React.Component {
 
   componentDidMount () {
     this.generateMap()
-    this.renderMap()
     this.renderCurrentLocationMarker()
+    this.renderMap()
 
     this.$map.addEventListener( 'click', ( e ) => {
       if ( e.target.tagName === 'IMG' ) return
@@ -39,6 +40,10 @@ class PlaceMap extends React.Component {
     if ( !deepEqual( prevProps.mapCenter, this.props.mapCenter )) {
       this.centerMapAt( this.props.mapCenter )
     }
+
+    if ( !deepEqual( prevProps.filters, this.props.filters )) {
+      this.renderMap()
+    }
   }
 
   updatePlaceData ( places ) {
@@ -53,9 +58,27 @@ class PlaceMap extends React.Component {
     if ( !currentUser ) return
     const usersToShow = [ currentUser.uid ].concat( currentUser.following || [])
 
+    const placesByFilter = {
+      yours: [],
+      friends: [],
+    }
+
     getPlaceIdsFromUsers( usersToShow )
-    .then(( _placeIds ) => {
-      const placeIds = uniq([].concat.apply([], _placeIds ))
+    .then(( placeIdArrays ) => {
+      // Organize places into either 'you' or 'friends'
+      placeIdArrays.forEach(( array, i ) => {
+        if ( i === 0 ) placesByFilter.yours = array
+        else placesByFilter.friends = placesByFilter.friends.concat( array )
+      })
+
+      let allPlaces = []
+      for ( let type in this.props.filters ) {
+        if ( this.props.filters[ type ]) allPlaces.push( placesByFilter[ type ])
+      }
+
+      this.setState({ placesByFilter })
+
+      const placeIds = uniq([].concat.apply([], allPlaces ))
 
       getPlacesWithFollowerInfo( placeIds, currentUser )
       .then(( places ) => {
@@ -69,42 +92,41 @@ class PlaceMap extends React.Component {
   }
 
   renderPlaceMarkers () {
+    this.removeAllMarkers()
+
     const markers = this.state.places.map(( place, i ) => {
       // Safety net for dead data
       if ( !place ) return null
 
-      let placeMarkerImg = placeMarkers.friends
+      const isYours = this.state.placesByFilter.yours.indexOf( place.id ) > -1
+      const type = isYours ? 'yours' : 'friends'
+      const icon = placeMarkers[ type ]
 
-      const { currentUser } = this.props
-      if ( currentUser && currentUser.places.indexOf( place.id ) > -1 ) {
-        placeMarkerImg = placeMarkers.yours
-      }
-
-      const largeIconImg = Object.assign(
+      const largeIcon = Object.assign(
         {},
-        placeMarkerImg,
+        icon,
         { scaledSize: new google.maps.Size( 40, 60 ) }
       )
 
-      const marker = new google.maps.Marker({
+      const ref = new google.maps.Marker({
         position: {
           lat: place.lat,
           lng: place.lng,
         },
-        icon: placeMarkerImg,
+        icon: icon,
         label: ' ',
       })
 
-      marker.setMap( this.map )
-      marker.addListener( 'click', () => {
+      ref.setMap( this.map )
+      ref.addListener( 'click', () => {
         this.setActiveMarker( i )
       })
 
       return {
         place,
-        ref: marker,
-        originalIcon: placeMarkerImg,
-        largeIcon: largeIconImg,
+        icon,
+        ref,
+        largeIcon,
       }
     })
 
@@ -116,7 +138,7 @@ class PlaceMap extends React.Component {
 
     markers.forEach(( marker ) => {
       if ( !marker ) return
-      marker.ref.setIcon( marker.originalIcon )
+      marker.ref.setIcon( marker.icon )
     })
 
     const activeMarker = markers[ activePlaceIndex ]
@@ -124,6 +146,23 @@ class PlaceMap extends React.Component {
     if ( !activeMarker ) return
 
     activeMarker.ref.setIcon( activeMarker.largeIcon )
+  }
+
+  removeMarker( marker ) {
+    if ( !marker ) return
+    marker.ref.setMap( null )
+  }
+
+  removeAllMarkers() {
+    const { markers } = this.state
+    markers.forEach(( marker ) => {
+      this.removeMarker( marker )
+    })
+
+    this.setState({
+      markers: [],
+      activePlaceIndex: null,
+    })
   }
 
   setActiveMarker( index ) {

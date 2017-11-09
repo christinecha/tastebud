@@ -14,6 +14,10 @@ class MapView extends React.Component {
     this.toggleDetailView = this.toggleDetailView.bind( this )
 
     this.state = {
+      filters: {
+        yours: true,
+        friends: true,
+      },
       mapCenter: props.currentLocation,
       activePlace: null,
       detailView: false,
@@ -30,6 +34,12 @@ class MapView extends React.Component {
 
   toggleDetailView() {
     this.setState({ detailView: !this.state.detailView })
+  }
+
+  toggleFilter( type ) {
+    const newFilters = Object.assign({}, this.state.filters )
+    newFilters[ type ] = !newFilters[ type ]
+    this.setState({ filters: newFilters })
   }
 
   renderPlaceInfo () {
@@ -56,6 +66,23 @@ class MapView extends React.Component {
   }
 
   renderMapTools() {
+    const filterTypes = [ 'yours', 'friends', 'popular' ]
+
+    const filters = filterTypes.map(( type, i ) => {
+      const isActive = !!this.state.filters[ type ]
+      const isActiveClass = isActive ? 'is-active' : ''
+
+      return (
+        <div
+          key={i}
+          className={`type label ${ type } ${ isActiveClass }`}
+          onClick={() => this.toggleFilter( type )}
+        >
+          <div className='icon'></div>
+          {type}
+        </div>
+      )
+    })
     return (
       <div className='map-tools'>
         <PlaceSearch
@@ -63,18 +90,7 @@ class MapView extends React.Component {
           currentLocation={this.props.currentLocation}
         />
         <div className='reference'>
-          <div className='type label yours'>
-            <div className='icon'></div>
-            Yours
-          </div>
-          <div className='type label friends'>
-            <div className='icon'></div>
-            Friends
-          </div>
-          <div className='type label popular'>
-            <div className='icon'></div>
-            Popular
-          </div>
+          {filters}
         </div>
       </div>
     )
@@ -92,6 +108,7 @@ class MapView extends React.Component {
           updateActivePlace={this.updateActivePlace}
           currentUser={this.props.currentUser}
           currentLocation={this.props.currentLocation}
+          filters={this.state.filters}
         />
         {this.renderPlaceInfo()}
       </main>

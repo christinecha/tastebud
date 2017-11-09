@@ -17,30 +17,32 @@ class Header extends React.Component {
   }
 
   render () {
-    const { currentUser } = this.props
+    const { currentUser, location } = this.props
     if ( !currentUser ) return null
+
+    const pathMatch = location.pathname.split( '/' )[ 1 ]
 
     return (
       <nav id='header'>
-        <NavItem>
+        <NavItem isActive={pathMatch === 'map'}>
           <Link to='/map'>
             <img src='/assets/images/icon_places.svg' />
             <p className='label'>Map</p>
           </Link>
         </NavItem>
-        <NavItem>
+        <NavItem isActive={pathMatch === 'search'}>
           <Link to='/search'>
             <img src='/assets/images/icon_add.svg' />
             <p className='label'>Add</p>
           </Link>
         </NavItem>
-        <NavItem>
+        <NavItem isActive={pathMatch === 'users'}>
           <Link to={`/users/${ currentUser.uid }`}>
             <img src='/assets/images/icon_profile.svg' />
             <p className='label'>Profile</p>
           </Link>
         </NavItem>
-        <NavItem>
+        <NavItem isActive={pathMatch === 'activity'}>
           <div onClick={this.handleClick}>
             <img src='/assets/images/icon_activity.svg' />
             <p className='label'>Sign Out</p>

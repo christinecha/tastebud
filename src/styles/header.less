@@ -33,6 +33,15 @@
       border: none;
     }
 
+    &.is-active {
+      img { opacity: 0.6; }
+    }
+
+    img {
+      opacity: 0.1;
+      transition: opacity 600ms ease-in-out;
+    }
+
     .label {
       font-size: 8px;
     }
