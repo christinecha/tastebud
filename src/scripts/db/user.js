@@ -63,23 +63,54 @@ export const createUserFromFacebookRedirect = ( username, callback, err ) => {
 }
 
 export const followUser = ( user, followId ) => {
-  const following = user.following ? user.following.slice() : []
-  if ( following.indexOf( followId ) > -1 ) return
+  let following = user.following ? user.following.slice() : []
 
-  following.push( followId )
+  if ( following.indexOf( followId ) < 0 ) {
+    following.push( followId )
+  }
+
   updateUser( user.uid, { following })
 
-  getUser( followId ).then(( snapshot ) => {
+  getUser( followId )
+  .then(( snapshot ) => {
     const followedUser = snapshot.val()
-    updateUserFollowing( followedUser, user.uid )
+    addToUserFollowing( followedUser, user.uid )
   })
+  .catch(( err ) => { console.log( err ) })
 }
 
-export const updateUserFollowing = ( user, followerId ) => {
-  const followers = user.followers ? user.followers.slice() : []
-  if ( followers.indexOf( followerId ) > -1 ) return
+export const addToUserFollowing = ( user, followerId ) => {
+  let followers = user.followers ? user.followers.slice() : []
 
-  followers.push( followerId )
+  if ( followers.indexOf( followerId ) < 0 ) {
+    followers.push( followerId )
+  }
+
+  updateUser( user.uid, { followers })
+}
+
+export const unfollowUser = ( user, unfollowId ) => {
+  let following = user.following ? user.following.slice() : []
+
+  const index = following.indexOf( unfollowId )
+  if ( index > -1 ) following.splice( index, 1 )
+
+  updateUser( user.uid, { following })
+
+  getUser( unfollowId )
+  .then(( snapshot ) => {
+    const unfollowedUser = snapshot.val()
+    removeFromUserFollowing( unfollowedUser, user.uid )
+  })
+  .catch(( err ) => { console.log( err ) })
+}
+
+export const removeFromUserFollowing = ( user, unfollowerId ) => {
+  let followers = user.followers ? user.followers.slice() : []
+
+  const index = followers.indexOf( unfollowerId )
+  if ( index > -1 ) followers.splice( index, 1 )
+
   updateUser( user.uid, { followers })
 }
 

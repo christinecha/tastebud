@@ -91,6 +91,7 @@ class MapView extends React.Component {
           mapCenter={this.state.mapCenter}
           updateActivePlace={this.updateActivePlace}
           currentUser={this.props.currentUser}
+          currentLocation={this.props.currentLocation}
         />
         {this.renderPlaceInfo()}
       </main>

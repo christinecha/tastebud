@@ -2,6 +2,7 @@ import React from 'react'
 import uniq from 'lodash/uniq'
 
 import { getPlacesWithFollowerInfo, getPlaceIdsFromUsers } from '../../db/place'
+import { deepEqual } from '../../lib/deep-equal'
 import { placeMarkers, currentLocationImage } from '../../constants/map-markers'
 import mapConfig from '../../constants/map-config'
 
@@ -26,6 +27,7 @@ class PlaceMap extends React.Component {
 
       this.setState({ activePlaceIndex: null })
       this.props.updateActivePlace( null )
+      this.resetMarkers()
     })
   }
 
@@ -33,18 +35,10 @@ class PlaceMap extends React.Component {
     this.isUnmounting = true
   }
 
-  componentDidUpdate( prevProps, props ) {
-    const prevLat = prevProps.mapCenter.lat
-    const prevLng = prevProps.mapCenter.lng
-
-    if (
-      prevLat === this.props.mapCenter.lat &&
-      prevLng === this.props.mapCenter.lng
-    ) {
-      return
+  componentDidUpdate( prevProps ) {
+    if ( !deepEqual( prevProps.mapCenter, this.props.mapCenter )) {
+      this.centerMapAt( this.props.mapCenter )
     }
-
-    this.centerMapAt( this.props.mapCenter )
   }
 
   updatePlaceData ( places ) {
@@ -77,7 +71,7 @@ class PlaceMap extends React.Component {
   renderPlaceMarkers () {
     const markers = this.state.places.map(( place, i ) => {
       // Safety net for dead data
-      if ( !place ) return
+      if ( !place ) return null
 
       let placeMarkerImg = placeMarkers.friends
 
@@ -86,9 +80,11 @@ class PlaceMap extends React.Component {
         placeMarkerImg = placeMarkers.yours
       }
 
-      const largeIconImg = Object.assign({}, placeMarkerImg, {
-        scaledSize: new google.maps.Size( 40, 60 ),
-      })
+      const largeIconImg = Object.assign(
+        {},
+        placeMarkerImg,
+        { scaledSize: new google.maps.Size( 40, 60 ) }
+      )
 
       const marker = new google.maps.Marker({
         position: {
@@ -101,28 +97,44 @@ class PlaceMap extends React.Component {
 
       marker.setMap( this.map )
       marker.addListener( 'click', () => {
-        const { activePlaceIndex, markers } = this.state
-
-        if ( activePlaceIndex !== null ) {
-          const activeMarker = markers[ activePlaceIndex ]
-          activeMarker.ref.setIcon( activeMarker.originalIcon )
-        }
-
-        this.centerMapAt( marker.getPosition())
-        marker.setIcon( largeIconImg )
-
-        this.setState({ activePlaceIndex: i })
-        this.props.updateActivePlace( place )
+        this.setActiveMarker( i )
       })
 
       return {
         place,
         ref: marker,
         originalIcon: placeMarkerImg,
+        largeIcon: largeIconImg,
       }
     })
 
     this.setState({ markers })
+  }
+
+  resetMarkers() {
+    const { activePlaceIndex, markers } = this.state
+
+    markers.forEach(( marker ) => {
+      if ( !marker ) return
+      marker.ref.setIcon( marker.originalIcon )
+    })
+
+    const activeMarker = markers[ activePlaceIndex ]
+
+    if ( !activeMarker ) return
+
+    activeMarker.ref.setIcon( activeMarker.largeIcon )
+  }
+
+  setActiveMarker( index ) {
+    const { markers } = this.state
+    const activeMarker = markers[ index ]
+
+    this.centerMapAt( activeMarker.ref.getPosition())
+
+    this.setState({ activePlaceIndex: index })
+    this.props.updateActivePlace( activeMarker.place )
+    this.resetMarkers()
   }
 
   renderCurrentLocationMarker () {

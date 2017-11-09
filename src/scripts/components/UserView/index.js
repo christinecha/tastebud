@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-import { followUser, getUser, saveUser, unwatchUser, watchUser } from '../../db/user'
+import { followUser, unfollowUser, getUser, saveUser, unwatchUser, watchUser } from '../../db/user'
 import { getPlacesWithFollowerInfo } from '../../db/place'
 import { getFollowerInfo } from '../../lib/getFollowerInfo'
 
@@ -31,9 +31,10 @@ class UserView extends React.Component {
 
   componentDidUpdate() {
     const userId = this.props.match.params.uid
-    if ( userId === this.state.user ) return
 
-    unwatchUser( this.state.user.uid, this.handleWatchUser )
+    if ( this.state.user && userId === this.state.user.uid ) return
+
+    if ( this.state.user ) unwatchUser( this.state.user.uid, this.handleWatchUser )
     watchUser( userId, this.handleWatchUser )
   }
 
@@ -53,9 +54,9 @@ class UserView extends React.Component {
   }
 
   componentWillUnmount () {
-    const userId = this.props.match.params.uid
     this.isUnmounting = true
-    unwatchUser( userId, this.handleWatchUser )
+
+    if ( this.state.user ) unwatchUser( this.state.user.uid, this.handleWatchUser )
   }
 
   updateStateArray ( key, newItem, i ) {
@@ -95,6 +96,13 @@ class UserView extends React.Component {
     followUser( currentUser, user.uid )
   }
 
+  unfollowUser () {
+    const { currentUser } = this.props
+    const { user } = this.state
+
+    unfollowUser( currentUser, user.uid )
+  }
+
   renderStats () {
     const { user } = this.state
 
@@ -126,6 +134,35 @@ class UserView extends React.Component {
     )
   }
 
+  renderFollowButton() {
+    const { currentUser } = this.props
+    const { user } = this.state
+
+    const isSelf = currentUser && currentUser.uid === user.uid
+    const isFollowing = currentUser.following.indexOf( user.uid ) > -1
+    const canFollow = !isFollowing && !isSelf
+
+    if ( canFollow ) {
+      return (
+        <button
+          className='follow-profile'
+          onClick={() => this.followUser()}
+        >
+          follow
+        </button>
+      )
+    }
+
+    return (
+      <button
+        className='edit-profile'
+        onClick={() => this.unfollowUser()}
+      >
+        unfollow
+      </button>
+    )
+  }
+
   renderUserInfo () {
     const { currentUser } = this.props
     const { user } = this.state
@@ -133,33 +170,13 @@ class UserView extends React.Component {
 
     if ( this.state.isEditing ) return <EditUser {...this.props} />
 
-    const isSelf = (
-      currentUser &&
-      currentUser.uid === user.uid
-    )
-
     const profilePicStyle = {
       backgroundImage: `url(https://graph.facebook.com/${ user.uid }/picture?type=large)`,
     }
 
     return (
       <div>
-        {isSelf &&
-          <button
-            className='edit-profile'
-            onClick={() => this.setState({ isEditing: true })}
-          >
-            edit
-          </button>
-        }
-        {!isSelf &&
-          <button
-            className='follow-profile'
-            onClick={() => this.followUser()}
-          >
-            follow
-          </button>
-        }
+        {this.renderFollowButton()}
         <div className='profile-picture' style={profilePicStyle}></div>
         <h1>{user.fullName}</h1>
         <h5>@{user.username}</h5>

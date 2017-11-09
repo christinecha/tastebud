@@ -3412,7 +3412,7 @@ module.exports = {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.addPlaceToUser = exports.removePlaceFromUser = exports.updateUserFollowing = exports.followUser = exports.createUserFromFacebookRedirect = exports.updateUser = exports.unwatchUser = exports.watchUser = exports.getUser = exports.findUserByExactUsername = exports.findUsersByUsername = exports.saveUser = undefined;
+exports.addPlaceToUser = exports.removePlaceFromUser = exports.removeFromUserFollowing = exports.unfollowUser = exports.addToUserFollowing = exports.followUser = exports.createUserFromFacebookRedirect = exports.updateUser = exports.unwatchUser = exports.watchUser = exports.getUser = exports.findUserByExactUsername = exports.findUsersByUsername = exports.saveUser = undefined;
 
 var _firebase = __webpack_require__(85);
 
@@ -3483,22 +3483,53 @@ var createUserFromFacebookRedirect = exports.createUserFromFacebookRedirect = fu
 
 var followUser = exports.followUser = function followUser(user, followId) {
   var following = user.following ? user.following.slice() : [];
-  if (following.indexOf(followId) > -1) return;
 
-  following.push(followId);
+  if (following.indexOf(followId) < 0) {
+    following.push(followId);
+  }
+
   updateUser(user.uid, { following: following });
 
   getUser(followId).then(function (snapshot) {
     var followedUser = snapshot.val();
-    updateUserFollowing(followedUser, user.uid);
+    addToUserFollowing(followedUser, user.uid);
+  }).catch(function (err) {
+    console.log(err);
   });
 };
 
-var updateUserFollowing = exports.updateUserFollowing = function updateUserFollowing(user, followerId) {
+var addToUserFollowing = exports.addToUserFollowing = function addToUserFollowing(user, followerId) {
   var followers = user.followers ? user.followers.slice() : [];
-  if (followers.indexOf(followerId) > -1) return;
 
-  followers.push(followerId);
+  if (followers.indexOf(followerId) < 0) {
+    followers.push(followerId);
+  }
+
+  updateUser(user.uid, { followers: followers });
+};
+
+var unfollowUser = exports.unfollowUser = function unfollowUser(user, unfollowId) {
+  var following = user.following ? user.following.slice() : [];
+
+  var index = following.indexOf(unfollowId);
+  if (index > -1) following.splice(index, 1);
+
+  updateUser(user.uid, { following: following });
+
+  getUser(unfollowId).then(function (snapshot) {
+    var unfollowedUser = snapshot.val();
+    removeFromUserFollowing(unfollowedUser, user.uid);
+  }).catch(function (err) {
+    console.log(err);
+  });
+};
+
+var removeFromUserFollowing = exports.removeFromUserFollowing = function removeFromUserFollowing(user, unfollowerId) {
+  var followers = user.followers ? user.followers.slice() : [];
+
+  var index = followers.indexOf(unfollowerId);
+  if (index > -1) followers.splice(index, 1);
+
   updateUser(user.uid, { followers: followers });
 };
 
@@ -16420,9 +16451,10 @@ var UserView = function (_React$Component) {
     key: 'componentDidUpdate',
     value: function componentDidUpdate() {
       var userId = this.props.match.params.uid;
-      if (userId === this.state.user) return;
 
-      (0, _user.unwatchUser)(this.state.user.uid, this.handleWatchUser);
+      if (this.state.user && userId === this.state.user.uid) return;
+
+      if (this.state.user) (0, _user.unwatchUser)(this.state.user.uid, this.handleWatchUser);
       (0, _user.watchUser)(userId, this.handleWatchUser);
     }
   }, {
@@ -16445,9 +16477,9 @@ var UserView = function (_React$Component) {
   }, {
     key: 'componentWillUnmount',
     value: function componentWillUnmount() {
-      var userId = this.props.match.params.uid;
       this.isUnmounting = true;
-      (0, _user.unwatchUser)(userId, this.handleWatchUser);
+
+      if (this.state.user) (0, _user.unwatchUser)(this.state.user.uid, this.handleWatchUser);
     }
   }, {
     key: 'updateStateArray',
@@ -16490,6 +16522,15 @@ var UserView = function (_React$Component) {
 
 
       (0, _user.followUser)(currentUser, user.uid);
+    }
+  }, {
+    key: 'unfollowUser',
+    value: function unfollowUser() {
+      var currentUser = this.props.currentUser;
+      var user = this.state.user;
+
+
+      (0, _user.unfollowUser)(currentUser, user.uid);
     }
   }, {
     key: 'renderStats',
@@ -16559,37 +16600,20 @@ var UserView = function (_React$Component) {
       );
     }
   }, {
-    key: 'renderUserInfo',
-    value: function renderUserInfo() {
+    key: 'renderFollowButton',
+    value: function renderFollowButton() {
       var _this3 = this;
 
       var currentUser = this.props.currentUser;
       var user = this.state.user;
 
-      if (!user) return null;
-
-      if (this.state.isEditing) return _react2.default.createElement(_EditUser2.default, this.props);
 
       var isSelf = currentUser && currentUser.uid === user.uid;
+      var isFollowing = currentUser.following.indexOf(user.uid) > -1;
+      var canFollow = !isFollowing && !isSelf;
 
-      var profilePicStyle = {
-        backgroundImage: 'url(https://graph.facebook.com/' + user.uid + '/picture?type=large)'
-      };
-
-      return _react2.default.createElement(
-        'div',
-        null,
-        isSelf && _react2.default.createElement(
-          'button',
-          {
-            className: 'edit-profile',
-            onClick: function onClick() {
-              return _this3.setState({ isEditing: true });
-            }
-          },
-          'edit'
-        ),
-        !isSelf && _react2.default.createElement(
+      if (canFollow) {
+        return _react2.default.createElement(
           'button',
           {
             className: 'follow-profile',
@@ -16598,7 +16622,38 @@ var UserView = function (_React$Component) {
             }
           },
           'follow'
-        ),
+        );
+      }
+
+      return _react2.default.createElement(
+        'button',
+        {
+          className: 'edit-profile',
+          onClick: function onClick() {
+            return _this3.unfollowUser();
+          }
+        },
+        'unfollow'
+      );
+    }
+  }, {
+    key: 'renderUserInfo',
+    value: function renderUserInfo() {
+      var currentUser = this.props.currentUser;
+      var user = this.state.user;
+
+      if (!user) return null;
+
+      if (this.state.isEditing) return _react2.default.createElement(_EditUser2.default, this.props);
+
+      var profilePicStyle = {
+        backgroundImage: 'url(https://graph.facebook.com/' + user.uid + '/picture?type=large)'
+      };
+
+      return _react2.default.createElement(
+        'div',
+        null,
+        this.renderFollowButton(),
         _react2.default.createElement('div', { className: 'profile-picture', style: profilePicStyle }),
         _react2.default.createElement(
           'h1',
@@ -30955,6 +31010,8 @@ var _uniq2 = _interopRequireDefault(_uniq);
 
 var _place = __webpack_require__(50);
 
+var _deepEqual = __webpack_require__(555);
+
 var _mapMarkers = __webpack_require__(276);
 
 var _mapConfig2 = __webpack_require__(275);
@@ -30999,6 +31056,7 @@ var PlaceMap = function (_React$Component) {
 
         _this2.setState({ activePlaceIndex: null });
         _this2.props.updateActivePlace(null);
+        _this2.resetMarkers();
       });
     }
   }, {
@@ -31008,15 +31066,10 @@ var PlaceMap = function (_React$Component) {
     }
   }, {
     key: 'componentDidUpdate',
-    value: function componentDidUpdate(prevProps, props) {
-      var prevLat = prevProps.mapCenter.lat;
-      var prevLng = prevProps.mapCenter.lng;
-
-      if (prevLat === this.props.mapCenter.lat && prevLng === this.props.mapCenter.lng) {
-        return;
+    value: function componentDidUpdate(prevProps) {
+      if (!(0, _deepEqual.deepEqual)(prevProps.mapCenter, this.props.mapCenter)) {
+        this.centerMapAt(this.props.mapCenter);
       }
-
-      this.centerMapAt(this.props.mapCenter);
     }
   }, {
     key: 'updatePlaceData',
@@ -31056,7 +31109,7 @@ var PlaceMap = function (_React$Component) {
 
       var markers = this.state.places.map(function (place, i) {
         // Safety net for dead data
-        if (!place) return;
+        if (!place) return null;
 
         var placeMarkerImg = _mapMarkers.placeMarkers.friends;
 
@@ -31066,9 +31119,7 @@ var PlaceMap = function (_React$Component) {
           placeMarkerImg = _mapMarkers.placeMarkers.yours;
         }
 
-        var largeIconImg = Object.assign({}, placeMarkerImg, {
-          scaledSize: new google.maps.Size(40, 60)
-        });
+        var largeIconImg = Object.assign({}, placeMarkerImg, { scaledSize: new google.maps.Size(40, 60) });
 
         var marker = new google.maps.Marker({
           position: {
@@ -31081,31 +31132,50 @@ var PlaceMap = function (_React$Component) {
 
         marker.setMap(_this4.map);
         marker.addListener('click', function () {
-          var _state = _this4.state,
-              activePlaceIndex = _state.activePlaceIndex,
-              markers = _state.markers;
-
-
-          if (activePlaceIndex !== null) {
-            var activeMarker = markers[activePlaceIndex];
-            activeMarker.ref.setIcon(activeMarker.originalIcon);
-          }
-
-          _this4.centerMapAt(marker.getPosition());
-          marker.setIcon(largeIconImg);
-
-          _this4.setState({ activePlaceIndex: i });
-          _this4.props.updateActivePlace(place);
+          _this4.setActiveMarker(i);
         });
 
         return {
           place: place,
           ref: marker,
-          originalIcon: placeMarkerImg
+          originalIcon: placeMarkerImg,
+          largeIcon: largeIconImg
         };
       });
 
       this.setState({ markers: markers });
+    }
+  }, {
+    key: 'resetMarkers',
+    value: function resetMarkers() {
+      var _state = this.state,
+          activePlaceIndex = _state.activePlaceIndex,
+          markers = _state.markers;
+
+
+      markers.forEach(function (marker) {
+        if (!marker) return;
+        marker.ref.setIcon(marker.originalIcon);
+      });
+
+      var activeMarker = markers[activePlaceIndex];
+
+      if (!activeMarker) return;
+
+      activeMarker.ref.setIcon(activeMarker.largeIcon);
+    }
+  }, {
+    key: 'setActiveMarker',
+    value: function setActiveMarker(index) {
+      var markers = this.state.markers;
+
+      var activeMarker = markers[index];
+
+      this.centerMapAt(activeMarker.ref.getPosition());
+
+      this.setState({ activePlaceIndex: index });
+      this.props.updateActivePlace(activeMarker.place);
+      this.resetMarkers();
     }
   }, {
     key: 'renderCurrentLocationMarker',
@@ -31494,7 +31564,8 @@ var MapView = function (_React$Component) {
         _react2.default.createElement(_PlaceMap2.default, {
           mapCenter: this.state.mapCenter,
           updateActivePlace: this.updateActivePlace,
-          currentUser: this.props.currentUser
+          currentUser: this.props.currentUser,
+          currentLocation: this.props.currentLocation
         }),
         this.renderPlaceInfo()
       );
@@ -64552,6 +64623,33 @@ __webpack_require__(549);
 exports.setImmediate = setImmediate;
 exports.clearImmediate = clearImmediate;
 
+
+/***/ }),
+/* 555 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var deepEqual = exports.deepEqual = function deepEqual(obj1, obj2) {
+  if (!obj1 || !obj2) return;
+  if ((typeof obj1 === 'undefined' ? 'undefined' : _typeof(obj1)) !== 'object' || (typeof obj2 === 'undefined' ? 'undefined' : _typeof(obj2)) !== 'object') return;
+  if (Object.keys(obj1).length !== Object.keys(obj2).length) return false;
+
+  var equal = true;
+
+  for (var i in obj1) {
+    if (obj1[i] !== obj2[i]) equal = false;
+  }
+
+  return equal;
+};
 
 /***/ })
 /******/ ]);
