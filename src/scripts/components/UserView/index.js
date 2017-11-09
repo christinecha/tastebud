@@ -1,9 +1,14 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-import { followUser, unfollowUser, getUser, saveUser, unwatchUser, watchUser } from '../../db/user'
+import {
+  followUser,
+  unfollowUser,
+  saveUser,
+  unwatchUser,
+  watchUser
+} from '../../db/user'
 import { getPlacesWithFollowerInfo } from '../../db/place'
-import { getFollowerInfo } from '../../lib/getFollowerInfo'
 
 import EditUser from './EditUser'
 import PlaceList from '../PlaceList'
@@ -14,6 +19,8 @@ class UserView extends React.Component {
 
     this.handleWatchUser = this.handleWatchUser.bind( this )
     this.getUserPlaces = this.getUserPlaces.bind( this )
+    this.followUser = this.followUser.bind( this )
+    this.unfollowUser = this.unfollowUser.bind( this )
 
     this.state = {
       user: null,
@@ -32,7 +39,7 @@ class UserView extends React.Component {
   componentDidUpdate() {
     const userId = this.props.match.params.uid
 
-    if ( this.state.user && userId === this.state.user.uid ) return
+    if ( this.state.user && ( userId === this.state.user.uid )) return
 
     if ( this.state.user ) unwatchUser( this.state.user.uid, this.handleWatchUser )
     watchUser( userId, this.handleWatchUser )
@@ -45,6 +52,7 @@ class UserView extends React.Component {
     this.setState({ user }, this.getUserPlaces )
 
     const { currentUser } = this.props
+
     if ( currentUser && user.uid === currentUser.uid ) {
       if ( currentUser.firstLogin ) {
         currentUser.firstLogin = false
@@ -139,26 +147,22 @@ class UserView extends React.Component {
     const { user } = this.state
 
     const isSelf = currentUser && currentUser.uid === user.uid
-    const isFollowing = currentUser.following.indexOf( user.uid ) > -1
-    const canFollow = !isFollowing && !isSelf
 
-    if ( canFollow ) {
+    if ( isSelf ) {
       return (
-        <button
-          className='follow-profile'
-          onClick={() => this.followUser()}
-        >
-          follow
+        <button className='edit-profile' onClick={() => this.setState({ isEditing: true })}>
+          edit
         </button>
       )
     }
+    const canFollow = currentUser.following.indexOf( user.uid ) < 0
+
+    const onClick = canFollow ? this.followUser : this.unfollowUser
+    const text = canFollow ? 'follow' : 'unfollow'
 
     return (
-      <button
-        className='edit-profile'
-        onClick={() => this.unfollowUser()}
-      >
-        unfollow
+      <button className='edit-profile' onClick={onClick}>
+        {text}
       </button>
     )
   }

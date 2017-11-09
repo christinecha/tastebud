@@ -3448,8 +3448,8 @@ var watchUser = exports.watchUser = function watchUser(id, callback) {
   return _firebase.ref.child('users/' + id).on('value', callback);
 };
 
-var unwatchUser = exports.unwatchUser = function unwatchUser(id) {
-  return _firebase.ref.child('users/' + id).off('value');
+var unwatchUser = exports.unwatchUser = function unwatchUser(id, callback) {
+  return _firebase.ref.child('users/' + id).off('value', callback);
 };
 
 var updateUser = exports.updateUser = function updateUser(id, data) {
@@ -10934,11 +10934,13 @@ var UserList = function (_React$Component) {
 
       this.getUsers(props.users).then(function (userSnapshots) {
         if (_this2.isUnmounting) return;
-        _this2.setState({
-          users: userSnapshots.map(function (s) {
-            return s.val();
-          })
+
+        var users = [];
+        userSnapshots.forEach(function (s) {
+          if (s && s.val()) users.push(s.val());
         });
+
+        _this2.setState({ users: users });
       });
     }
   }, {
@@ -16402,8 +16404,6 @@ var _user = __webpack_require__(18);
 
 var _place = __webpack_require__(50);
 
-var _getFollowerInfo = __webpack_require__(132);
-
 var _EditUser = __webpack_require__(268);
 
 var _EditUser2 = _interopRequireDefault(_EditUser);
@@ -16430,6 +16430,8 @@ var UserView = function (_React$Component) {
 
     _this.handleWatchUser = _this.handleWatchUser.bind(_this);
     _this.getUserPlaces = _this.getUserPlaces.bind(_this);
+    _this.followUser = _this.followUser.bind(_this);
+    _this.unfollowUser = _this.unfollowUser.bind(_this);
 
     _this.state = {
       user: null,
@@ -16466,6 +16468,7 @@ var UserView = function (_React$Component) {
       this.setState({ user: user }, this.getUserPlaces);
 
       var currentUser = this.props.currentUser;
+
 
       if (currentUser && user.uid === currentUser.uid) {
         if (currentUser.firstLogin) {
@@ -16609,31 +16612,25 @@ var UserView = function (_React$Component) {
 
 
       var isSelf = currentUser && currentUser.uid === user.uid;
-      var isFollowing = currentUser.following.indexOf(user.uid) > -1;
-      var canFollow = !isFollowing && !isSelf;
 
-      if (canFollow) {
+      if (isSelf) {
         return _react2.default.createElement(
           'button',
-          {
-            className: 'follow-profile',
-            onClick: function onClick() {
-              return _this3.followUser();
-            }
-          },
-          'follow'
+          { className: 'edit-profile', onClick: function onClick() {
+              return _this3.setState({ isEditing: true });
+            } },
+          'edit'
         );
       }
+      var canFollow = currentUser.following.indexOf(user.uid) < 0;
+
+      var onClick = canFollow ? this.followUser : this.unfollowUser;
+      var text = canFollow ? 'follow' : 'unfollow';
 
       return _react2.default.createElement(
         'button',
-        {
-          className: 'edit-profile',
-          onClick: function onClick() {
-            return _this3.unfollowUser();
-          }
-        },
-        'unfollow'
+        { className: 'edit-profile', onClick: onClick },
+        text
       );
     }
   }, {

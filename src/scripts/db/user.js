@@ -31,8 +31,8 @@ export const watchUser = ( id, callback ) => {
   return ref.child( `users/${ id }` ).on( 'value', callback )
 }
 
-export const unwatchUser = ( id ) => {
-  return ref.child( `users/${ id }` ).off( 'value' )
+export const unwatchUser = ( id, callback ) => {
+  return ref.child( `users/${ id }` ).off( 'value', callback )
 }
 
 export const updateUser = ( id, data ) => {

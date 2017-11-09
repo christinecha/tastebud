@@ -22,9 +22,13 @@ class UserList extends React.Component {
 
     this.getUsers( props.users ).then(( userSnapshots ) => {
       if ( this.isUnmounting ) return
-      this.setState({
-        users: userSnapshots.map(( s ) => s.val()),
+
+      let users = []
+      userSnapshots.forEach(( s ) => {
+        if ( s && s.val()) users.push( s.val())
       })
+
+      this.setState({ users })
     })
   }
 

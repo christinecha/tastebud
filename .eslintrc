@@ -47,6 +47,7 @@
     #     "ArrowFunctionExpression": false
     #   }
     # }],
+    "react/jsx-uses-vars": "warn",
     "semi": [ "warn", "never" ],
     "space-in-parens": [ "warn", "always", { "exceptions": [ "[]", "{}", "()" ]}],
     "space-before-blocks": [ "warn", "always" ],
@@ -57,7 +58,7 @@
 
     // eslint-config-squarespace exceptions
     "camelcase": "warn",
-    "no-debugger": "warn",
+    "no-debugger": "off",
     "no-else-return": "off",
     "no-invalid-this": "off",
     "no-multi-spaces": "off",
