@@ -32130,6 +32130,9 @@ var SearchView = function (_React$Component) {
         if (_this3.isUnmounting) return;
         if (status !== google.maps.places.PlacesServiceStatus.OK) return;
 
+        // If this is not the most recent query, quit.
+        if (request.keyword !== _this3.state.searchQuery) return;
+
         var firstTenPlaces = places.length > 10 ? places.slice(0, 10) : places;
         _this3.setState({ places: firstTenPlaces });
       });

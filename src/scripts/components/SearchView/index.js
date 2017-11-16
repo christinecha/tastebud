@@ -88,6 +88,9 @@ class SearchView extends React.Component {
       if ( this.isUnmounting ) return
       if ( status !== google.maps.places.PlacesServiceStatus.OK ) return
 
+      // If this is not the most recent query, quit.
+      if ( request.keyword !== this.state.searchQuery ) return
+
       const firstTenPlaces = places.length > 10 ? places.slice( 0, 10 ) : places
       this.setState({ places: firstTenPlaces })
     })
