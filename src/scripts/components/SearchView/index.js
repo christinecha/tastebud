@@ -1,9 +1,10 @@
 import React from 'react'
+import axios from 'axios'
 
 import {
   findUsersByUsername,
   followUser,
-  getUser,
+  getUsers,
   saveUser
 } from '../../db/user'
 import { getPlace } from '../../db/place'
@@ -46,7 +47,10 @@ class SearchView extends React.Component {
   getSearchResults () {
     if ( this.hasEmptyQuery()) {
       clearTimeout( this.searchTimeout )
-      this.setState({ places: [], people: []})
+      this.setState({
+        places: [],
+        people: [],
+      })
       return
     }
 
@@ -90,15 +94,18 @@ class SearchView extends React.Component {
   }
 
   searchPeople () {
-    findUsersByUsername( this.state.searchQuery ).then(( snapshot ) => {
-      let people = []
+    const searchRequest = {
+      params: {
+        searchQuery: this.state.searchQuery,
+      },
+    }
 
-      snapshot.forEach(( childSnapshot, i ) => {
-        const user = childSnapshot.val()
-        people.push( user )
-      })
+    axios.get( '/search-users', searchRequest )
+    .then(( response ) => {
+      const people = response.data
+      const uids = people.map(( p ) => p.uid )
 
-      this.setState({ people })
+      this.setState({ people: uids })
     })
   }
 

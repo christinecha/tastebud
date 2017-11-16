@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { getUser } from '../db/user'
+import { deepEqual } from '../lib/deep-equal'
 
 class UserList extends React.Component {
   constructor ( props ) {
@@ -11,16 +12,29 @@ class UserList extends React.Component {
     }
   }
 
-  componentWillMount () {
-    if ( this.props.users[ 0 ] && typeof this.props.users[ 0 ] === 'object' ) {
+  componentWillMount() {
+    if ( !this.props.users[ 0 ]) return
+
+    if ( typeof this.props.users[ 0 ] === 'object' ) {
       this.setState({ users: this.props.users })
+    }
+    else {
+      this.populateUsers()
     }
   }
 
-  componentWillReceiveProps ( props ) {
-    if ( this.state.users.length > 0 ) return
+  componentDidUpdate ( props ) {
+    if ( deepEqual( props.users, this.props.users )) return
 
-    this.getUsers( props.users ).then(( userSnapshots ) => {
+    this.populateUsers()
+  }
+
+  componentWillUnmount () {
+    this.isUnmounting = true
+  }
+
+  populateUsers() {
+    this.getUsers( this.props.users ).then(( userSnapshots ) => {
       if ( this.isUnmounting ) return
 
       let users = []
@@ -30,10 +44,6 @@ class UserList extends React.Component {
 
       this.setState({ users })
     })
-  }
-
-  componentWillUnmount () {
-    this.isUnmounting = true
   }
 
   getUsers ( users ) {

@@ -27,6 +27,11 @@ export const getUser = ( id ) => {
   return ref.child( `users/${ id }` ).once( 'value' )
 }
 
+export const getUsers = ( ids ) => {
+  const promises = ids.map(( id ) => getUser( id ))
+  return Promise.all( promises )
+}
+
 export const watchUser = ( id, callback ) => {
   return ref.child( `users/${ id }` ).on( 'value', callback )
 }

@@ -2,10 +2,9 @@ const express = require( 'express' )
 const path = require( 'path' )
 const app = express()
 
-const yelp = require( 'yelp-fusion' )
-
-const YELP_ID = 'xAlOtfTlrg38WtIA_B_QZA'
-const YELP_SECRET = 'Kiklju4gg6B9zuR9FqxqSSVaoAy8GFU9xzanoQVUvGTJhMS3vGxY4nypjlemqoUp'
+const yelpData = require( './yelp-data' )
+const indexUser = require( './index-user' )
+const searchUsers = require( './search-users' )
 
 const PUBLIC_DIRECTORY = path.join( __dirname, '../public' )
 const HTML = path.join( __dirname, '../public/index.html' )
@@ -13,20 +12,9 @@ const HTML = path.join( __dirname, '../public/index.html' )
 app.set( 'port', process.env.PORT || 3000 )
 app.use( express.static( PUBLIC_DIRECTORY ))
 
-app.get( '/yelp-data', ( req, res ) => {
-  yelp.accessToken( YELP_ID, YELP_SECRET )
-  .then(( response ) => {
-    const client = yelp.client( response.jsonBody.access_token )
-
-    client.search( req.query )
-    .then(( response ) => {
-      const firstResult = response.jsonBody.businesses[ 0 ]
-      res.send( firstResult )
-    })
-    .catch(( err ) => console.log( err ))
-  })
-  .catch(( err ) => console.log( err ))
-})
+app.get( '/yelp-data', yelpData )
+app.get( '/index-user', indexUser )
+app.get( '/search-users', searchUsers )
 
 app.get( '*', ( req, res ) => {
   res.sendFile( HTML )
