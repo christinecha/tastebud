@@ -3412,7 +3412,11 @@ module.exports = {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.addPlaceToUser = exports.removePlaceFromUser = exports.removeFromUserFollowing = exports.unfollowUser = exports.addToUserFollowing = exports.followUser = exports.createUserFromFacebookRedirect = exports.updateUser = exports.unwatchUser = exports.watchUser = exports.getUsers = exports.getUser = exports.findUserByExactUsername = exports.findUsersByUsername = exports.saveUser = undefined;
+exports.addPlaceToUser = exports.removePlaceFromUser = exports.removeFromUserFollowing = exports.unfollowUser = exports.addToUserFollowing = exports.followUser = exports.createUserFromFacebookRedirect = exports.updateUser = exports.unwatchUser = exports.watchUser = exports.indexUser = exports.getUsers = exports.getUser = exports.findUserByExactUsername = exports.findUsersByUsername = exports.saveUser = undefined;
+
+var _axios = __webpack_require__(125);
+
+var _axios2 = _interopRequireDefault(_axios);
 
 var _firebase = __webpack_require__(85);
 
@@ -3426,6 +3430,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var saveUser = exports.saveUser = function saveUser(_userData) {
   var userData = (0, _createUserObject2.default)(_userData);
+  indexUser(userData);
   return _firebase.ref.child('users/' + userData.uid).set(userData, function (n) {
     return console.log('done', userData);
   });
@@ -3449,6 +3454,23 @@ var getUsers = exports.getUsers = function getUsers(ids) {
     return getUser(id);
   });
   return Promise.all(promises);
+};
+
+var indexUser = exports.indexUser = function indexUser(user) {
+  var userData = {
+    fullName: user.fullName,
+    uid: user.uid,
+    username: user.username
+  };
+
+  var params = {
+    params: {
+      key: 'users',
+      data: userData
+    }
+  };
+
+  _axios2.default.get('/index-user', params);
 };
 
 var watchUser = exports.watchUser = function watchUser(id, callback) {

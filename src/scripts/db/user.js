@@ -1,9 +1,11 @@
+import axios from 'axios'
 import { ref } from '../constants/firebase'
 import { getUserFromFacebook } from '../db/auth'
 import createUserObject from '../lib/createUserObject'
 
 export const saveUser = ( _userData ) => {
   const userData = createUserObject( _userData )
+  indexUser( userData )
   return ref.child( `users/${ userData.uid }` ).set( userData, ( n ) => console.log( 'done', userData ))
 }
 
@@ -30,6 +32,23 @@ export const getUser = ( id ) => {
 export const getUsers = ( ids ) => {
   const promises = ids.map(( id ) => getUser( id ))
   return Promise.all( promises )
+}
+
+export const indexUser = ( user ) => {
+  const userData = {
+    fullName: user.fullName,
+    uid: user.uid,
+    username: user.username,
+  }
+
+  const params = {
+    params: {
+      key: 'users',
+      data: userData,
+    },
+  }
+
+  axios.get( '/index-user', params )
 }
 
 export const watchUser = ( id, callback ) => {
