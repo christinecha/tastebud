@@ -30399,7 +30399,6 @@ var HomeView = function (_React$Component) {
             null,
             'The best way to save the best places.'
           ),
-          _react2.default.createElement(_Carousel2.default, null),
           _react2.default.createElement(
             'button',
             {

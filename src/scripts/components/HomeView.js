@@ -16,7 +16,6 @@ class HomeView extends React.Component {
         <div className='view-content'>
           <h1>flavorite</h1>
           <h3>The best way to save the best places.</h3>
-          <Carousel />
           <button
             className='button facebook full-width'
             onClick={signInWithFacebook}
