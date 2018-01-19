@@ -5,7 +5,7 @@ const ALGOLIA_ADMIN_KEY = '977c0cb665372132366cde9f28019cf6'
 
 const client = algoliasearch( ALGOLIA_ID, ALGOLIA_ADMIN_KEY )
 
-const indexUser = ( req, res ) => {
+const indexUser = ( req ) => {
   const { key, data } = req.query
 
   const JSONData = JSON.parse( data )

@@ -22,11 +22,16 @@ export const isDupePlace = ( locationData ) => {
 }
 
 export const newPlace = ( _locationData ) => {
-  return new Promise(( resolve, reject ) => {
+  return new Promise(( resolve ) => {
     const locationData = createPlaceObject( _locationData )
 
     isDupePlace( locationData ).then(( dupeId ) => {
-      if ( dupeId ) return resolve( dupeId )
+      if ( dupeId ) {
+        locationData.id = dupeId
+        ref.child( `places/${ locationData.id }` ).update( locationData )
+        .then(() => resolve( locationData.id ))
+        return
+      }
 
       ref.child( `places/${ locationData.id }` ).set( locationData )
       .then(() => resolve( locationData.id ))

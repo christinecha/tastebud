@@ -5,14 +5,11 @@ class Carousel extends React.Component {
     super( props )
 
     this.state = {
-      carouselIndex: 0,
+      index: 0,
     }
   }
 
   componentDidMount() {
-    this.$slides = this.$carousel.children
-    this.numOfSlides = this.$slides.length
-
     this.carouselInterval = setInterval(() => {
       this.nextSlide()
     }, 3000 )
@@ -23,27 +20,33 @@ class Carousel extends React.Component {
   }
 
   nextSlide() {
-    const carouselIndex = ( this.state.carouselIndex + 1 ) % this.numOfSlides
-    this.setState({ carouselIndex })
+    const index = ( this.state.index + 1 ) % this.props.numOfSlides
+    this.setState({ index })
   }
 
   renderCarousel() {
-    const slides = [
-      '',
-      '',
-      '',
-      '',
-    ]
+    const { index } = this.state
 
-    const $slides = slides.map(( slide, i ) => {
-      const isActive = this.state.carouselIndex === i
+    const $slides = this.props.children.map(( child, i ) => {
+      const distFromIndex = Math.abs( index - i )
+      const distFromEnd = this.props.numOfSlides - distFromIndex
+      const arrivalIndex   = i >= index ? distFromIndex : distFromEnd
+      const departureIndex = i <= index ? distFromIndex : distFromEnd
+
       return (
-        <div className={`slide ${ isActive ? 'is-active' : '' }`} key={i}></div>
+        <div
+          key={i}
+          className='slide'
+          data-arrival-index={arrivalIndex}
+          data-departure-index={departureIndex}
+        >
+          {child}
+        </div>
       )
     })
 
-    const $indicators = slides.map(( slide, i ) => {
-      const isActive = this.state.carouselIndex === i
+    const $indicators = this.props.children.map(( slide, i ) => {
+      const isActive = this.state.index === i
       return (
         <div className={`indicator ${ isActive ? 'is-active' : '' }`} key={i}></div>
       )
@@ -51,10 +54,10 @@ class Carousel extends React.Component {
 
     return (
       <div
-        className='onboarding-carousel'
+        className={`carousel ${ this.props.name }`}
         ref={( $c ) => this.$carousel = $c}
       >
-        <div className='slides-wrapper'>
+        <div className='slides-wrapper' ref={( $c ) => this.$slidesWrapper = $c}>
           {$slides}
         </div>
         <div className='indicators-wrapper'>

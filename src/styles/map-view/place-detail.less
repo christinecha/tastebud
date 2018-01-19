@@ -1,10 +1,12 @@
 #map-view {
   .place-detail {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+    padding-bottom: @header-height + 10px;
 
     background-color: #fff;
 
@@ -74,6 +76,49 @@
         margin-bottom: 15px;
         border: none;
         border-bottom: 1px solid @light-gray;
+      }
+    }
+
+    .instagram-feed {
+      position: relative;
+
+      .slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        margin: auto;
+
+        width: 80vw;
+        height: 80vw;
+        max-width: 500px;
+        max-height: 500px;
+
+        opacity: 0;
+
+        padding: 10px;
+        box-sizing: border-box;
+
+        &[data-arrival-index="0"] {
+          opacity: 1;
+        }
+
+        &[data-arrival-index="1"] {
+          opacity: 1;
+          transform: translate3d(100%, 0, 0);
+        }
+
+        &[data-departure-index="1"] {
+          opacity: 1;
+          transform: translate3d(-100%, 0, 0);
+        }
+      }
+
+      .instagram-image {
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
       }
     }
   }

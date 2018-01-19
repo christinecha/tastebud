@@ -5,6 +5,8 @@ const app = express()
 const yelpData = require( './yelp-data' )
 const indexUser = require( './index-user' )
 const searchUsers = require( './search-users' )
+const instagramData = require( './instagram-data' )
+const instagramUsername = require( './instagram-username' )
 
 const PUBLIC_DIRECTORY = path.join( __dirname, '../public' )
 const HTML = path.join( __dirname, '../public/index.html' )
@@ -15,6 +17,8 @@ app.use( express.static( PUBLIC_DIRECTORY ))
 app.get( '/yelp-data', yelpData )
 app.get( '/index-user', indexUser )
 app.get( '/search-users', searchUsers )
+app.get( '/instagram-data', instagramData )
+app.get( '/instagram-username', instagramUsername )
 
 app.get( '*', ( req, res ) => {
   res.sendFile( HTML )

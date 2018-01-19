@@ -3,6 +3,8 @@ import axios from 'axios'
 import { addUserToPlace, removeUserFromPlace, newPlace, updatePlace } from '../db/place'
 import { updateUser, addPlaceToUser, removePlaceFromUser } from '../db/user'
 
+import LOCALITY_NICKNAMES from '../constants/LOCALITY_NICKNAMES'
+
 class Place extends React.Component {
   constructor ( props ) {
     super( props )
@@ -62,6 +64,14 @@ class Place extends React.Component {
 
     this.getPlaceDetails()
     .then(( place ) => {
+      let locality
+
+      place.address_components.forEach(( c ) => {
+        if ( c.types.indexOf( 'sublocality' ) > -1 ) locality = c.long_name
+        if ( c.types.indexOf( 'locality' ) > -1 ) locality = c.long_name
+        if ( c.types.indexOf( 'administrative_area_level_1' ) > -1 ) locality = c.long_name
+      })
+
       const placeData = {
         name: place.name,
         id: place.place_id,
@@ -71,6 +81,7 @@ class Place extends React.Component {
         rating: place.rating,
         types: place.types,
         vicinity: place.vicinity,
+        locality: LOCALITY_NICKNAMES[ locality ] || locality || '',
       }
 
       newPlace( placeData )

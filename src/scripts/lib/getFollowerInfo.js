@@ -28,7 +28,7 @@ export const getFollowerInfo = ( place, currentUser ) => {
     }
 
     if ( followedUsers.length === 0 ) {
-      return resolve( `${ remaining } others` )
+      return resolve( `${ remaining } others like this` )
     }
 
     getUser( followedUsers[ 0 ])

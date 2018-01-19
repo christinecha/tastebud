@@ -3,17 +3,73 @@ import axios from 'axios'
 import getFriendlyDistance from '../../lib/getFriendlyDistance'
 import { updatePlace } from '../../db/place'
 
+import Carousel from '../shared/Carousel'
+
 class PlaceDetail extends React.Component {
   constructor( props ) {
     super( props )
 
     this.state = {
       yelpRating: null,
+      instagramUsername: null,
+      instagramImages: [],
     }
   }
 
   componentDidMount() {
     this.setYelpRating()
+    this.setInstagramUsername()
+  }
+
+  setInstagramUsername() {
+    const { activePlace } = this.props
+
+    const username = `${ activePlace.name } ${ activePlace.locality || '' }`
+
+    const request = {
+      params: {
+        username,
+      },
+    }
+
+    axios.get( '/instagram-username', request )
+    .then(( response ) => {
+      if ( !response.data ) {
+        request.params.username = activePlace.name
+
+        axios.get( '/instagram-username', request )
+        .then( this.updateInstagramUsername.bind( this ))
+        return
+      }
+
+      this.updateInstagramUsername( response )
+    })
+  }
+
+  updateInstagramUsername( response ) {
+    const { activePlace } = this.props
+
+    const instagramUsername = response.data
+    this.setState({ instagramUsername })
+    updatePlace( activePlace.id, { instagramUsername })
+    this.setInstagramImages()
+  }
+
+  setInstagramImages() {
+    const request = {
+      params: {
+        username: this.state.instagramUsername,
+      },
+    }
+
+    axios.get( '/instagram-data', request )
+    .then(( response ) => {
+      const { data } = response
+      const images = data.media.nodes
+      const instagramImages = images.map(( image ) => image.display_src )
+
+      this.setState({ instagramImages })
+    })
   }
 
   setYelpRating() {
@@ -65,6 +121,16 @@ class PlaceDetail extends React.Component {
     )
   }
 
+  renderInstagramFeed() {
+    let images = this.state.instagramImages.map(( src, i ) => {
+      return <div className='instagram-image' style={{ backgroundImage: `url(${ src })` }} key={i}></div>
+    })
+
+    return (
+      <Carousel name='instagram-feed' numOfSlides={images.length}>{images}</Carousel>
+    )
+  }
+
   render () {
     const { activePlace } = this.props
 
@@ -103,6 +169,7 @@ class PlaceDetail extends React.Component {
           </div>
           <hr />
           <p className='label'>{activePlace.followerInfo || 'You like this'}</p>
+          {this.renderInstagramFeed()}
         </div>
       </div>
     )
