@@ -139,10 +139,10 @@ class Place extends React.Component {
   }
 
   render () {
-    const { place } = this.props
+    const { place, onClick } = this.props
 
     return (
-      <div className='place'>
+      <div className='place' onClick={onClick}>
         <div className='info'>
           <div ref={( $result ) => this.$result = $result}></div>
           <div className='icon'></div>

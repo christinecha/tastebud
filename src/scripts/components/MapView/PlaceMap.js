@@ -22,14 +22,6 @@ class PlaceMap extends React.Component {
     this.generateMap()
     this.renderCurrentLocationMarker()
     this.renderMap()
-
-    this.$map.addEventListener( 'click', ( e ) => {
-      if ( e.target.tagName === 'IMG' ) return
-
-      this.setState({ activePlaceIndex: null })
-      this.props.updateActivePlace( null )
-      this.resetMarkers()
-    })
   }
 
   componentWillUnmount () {
@@ -105,7 +97,10 @@ class PlaceMap extends React.Component {
       const largeIcon = Object.assign(
         {},
         icon,
-        { scaledSize: new google.maps.Size( 40, 60 ) }
+        {
+          scaledSize: new google.maps.Size( 30, 30 ),
+          anchor: new google.maps.Point( 15, 15 ),
+        }
       )
 
       const ref = new google.maps.Marker({
@@ -192,6 +187,12 @@ class PlaceMap extends React.Component {
     const _mapConfig = Object.assign({}, mapConfig, { center })
 
     this.map = new google.maps.Map( this.$map, _mapConfig )
+
+    this.map.addListener( 'click', ( ) => {
+      this.setState({ activePlaceIndex: null })
+      this.props.updateActivePlace( null )
+      this.resetMarkers()
+    })
   }
 
   render () {

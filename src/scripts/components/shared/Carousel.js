@@ -4,19 +4,35 @@ class Carousel extends React.Component {
   constructor( props ) {
     super( props )
 
+    this.start = this.start.bind( this )
+    this.stop = this.stop.bind( this )
+
     this.state = {
       index: 0,
     }
   }
 
-  componentDidMount() {
+  start() {
+    this.stop()
     this.carouselInterval = setInterval(() => {
       this.nextSlide()
     }, 3000 )
   }
 
-  componentWillUnmount() {
+  stop() {
     clearInterval( this.carouselInterval )
+  }
+
+  componentDidMount() {
+    this.start()
+    window.addEventListener( 'focus', this.start )
+    window.addEventListener( 'blur', this.stop )
+  }
+
+  componentWillUnmount() {
+    this.stop()
+    window.removeEventListener( 'focus', this.start )
+    window.removeEventListener( 'blur', this.stop )
   }
 
   nextSlide() {
