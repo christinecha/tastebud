@@ -4,6 +4,7 @@ import getFriendlyDistance from '../../lib/getFriendlyDistance'
 import { updatePlace } from '../../db/place'
 
 import Carousel from '../shared/Carousel'
+import Modal from '../shared/Modal'
 
 class PlaceDetail extends React.Component {
   constructor( props ) {
@@ -13,6 +14,7 @@ class PlaceDetail extends React.Component {
       yelpRating: null,
       instagramUsername: null,
       instagramImages: [],
+      activeModalId: null,
     }
   }
 
@@ -23,6 +25,11 @@ class PlaceDetail extends React.Component {
 
   setInstagramUsername() {
     const { activePlace } = this.props
+
+    if ( activePlace.instagramUsername ) {
+      this.updateInstagramUsername( activePlace.instagramUsername )
+      return
+    }
 
     const username = `${ activePlace.name } ${ activePlace.locality || '' }`
 
@@ -38,24 +45,26 @@ class PlaceDetail extends React.Component {
         request.params.username = activePlace.name
 
         axios.get( '/instagram-username', request )
-        .then( this.updateInstagramUsername.bind( this ))
+        .then(( r ) => this.updateInstagramUsername( r.data ))
         return
       }
 
-      this.updateInstagramUsername( response )
+      this.updateInstagramUsername( response.data )
     })
   }
 
-  updateInstagramUsername( response ) {
+  updateInstagramUsername( instagramUsername ) {
     const { activePlace } = this.props
 
-    const instagramUsername = response.data
-    this.setState({ instagramUsername })
-    updatePlace( activePlace.id, { instagramUsername })
-    this.setInstagramImages()
+    this.setState({ instagramUsername }, () => {
+      updatePlace( activePlace.id, { instagramUsername })
+      this.setInstagramImages()
+    })
   }
 
   setInstagramImages() {
+    if ( !this.state.instagramUsername ) return
+
     const request = {
       params: {
         username: this.state.instagramUsername,
@@ -65,6 +74,7 @@ class PlaceDetail extends React.Component {
     axios.get( '/instagram-data', request )
     .then(( response ) => {
       const { data } = response
+      console.log( data )
       const images = data.media.nodes
       const instagramImages = images.map(( image ) => image.display_src )
 
@@ -106,6 +116,10 @@ class PlaceDetail extends React.Component {
     })
   }
 
+  setActiveModal( activeModalId = null ) {
+    this.setState({ activeModalId })
+  }
+
   renderYelpCategories() {
     const { yelpCategories } = this.state
     if ( !yelpCategories ) return
@@ -121,13 +135,30 @@ class PlaceDetail extends React.Component {
     )
   }
 
+  suggestInstagram() {
+    const instagramImages = []
+    this.setState({ instagramImages })
+    this.updateInstagramUsername( this.$instaSuggestion.value )
+    this.setActiveModal()
+  }
+
   renderInstagramFeed() {
+    const MODAL_ID = 0
     let images = this.state.instagramImages.map(( src, i ) => {
       return <div className='instagram-image' style={{ backgroundImage: `url(${ src })` }} key={i}></div>
     })
 
     return (
-      <Carousel name='instagram-feed' numOfSlides={images.length}>{images}</Carousel>
+      <div className='instagram-feed-wrapper'>
+        <Carousel name='instagram-feed' numOfSlides={images.length}>{images}</Carousel>
+        <p className='label' onClick={() => this.setActiveModal( MODAL_ID )}>Not the right Instagram account?</p>
+        <Modal name='instagram-correction' isActive={this.state.activeModalId === MODAL_ID}>
+          <div className='exit' onClick={this.setActiveModal.bind( this )}>✕</div>
+          <p className='label'>Suggest a different Instagram&nbsp;username:</p>
+          <input ref={( $s ) => { this.$instaSuggestion = $s }}type='text' />
+          <button onClick={this.suggestInstagram.bind( this )}>Confirm</button>
+        </Modal>
+      </div>
     )
   }
 
@@ -167,10 +198,11 @@ class PlaceDetail extends React.Component {
               <h4>{rating.toFixed( 1 )}</h4>
             </div>
           </div>
-          <hr />
           <p className='label'>{activePlace.followerInfo || 'You like this'}</p>
-          {this.renderInstagramFeed()}
+          <hr />
         </div>
+
+        {this.renderInstagramFeed()}
       </div>
     )
   }

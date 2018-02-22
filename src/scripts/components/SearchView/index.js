@@ -38,6 +38,7 @@ class SearchView extends React.Component {
   componentDidMount () {
     this.service = new google.maps.places.PlacesService( this.$results )
     this.lastSearch = performance.now()
+    this.$input.focus()
   }
 
   componentWillUnmount () {
@@ -183,7 +184,7 @@ class SearchView extends React.Component {
   render () {
     const hasResults = this.getResults().length > 0 ? 'has-results' : ''
     const capitalized = [
-      'Places', 'People',
+      'bars & restaurants', 'People',
     ]
 
     return (

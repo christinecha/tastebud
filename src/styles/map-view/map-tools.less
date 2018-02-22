@@ -11,8 +11,17 @@
 
     .location-search {
       width: 100%;
-      padding: 5px 10px;
-      box-sizing: border-box;
+
+      .fake-input {
+        display: block;
+        width: 100%;
+        font-size: 16px;
+        padding: 15px 25px;
+        box-sizing: border-box;
+        margin: 0;
+        text-align: left;
+        color: #777777;
+      }
 
       .input-wrapper {
         position: relative;
@@ -40,12 +49,12 @@
         top: 0;
         right: 0;
 
-        width: 42px;
-        height: 42px;
+        width: 48px;
+        height: 48px;
 
         cursor: pointer;
 
-        padding: 5px;
+        padding: 8px;
         box-sizing: border-box;
 
         transition: transform 500ms ease-in-out;

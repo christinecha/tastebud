@@ -13,11 +13,12 @@ class PlacePreview extends React.Component {
     }
 
     const distance = getFriendlyDistance( latLng, this.props.currentLocation )
+    const dollarSigns = '$$$$'.substr( 0, activePlace.pricePoint )
 
     return (
       <div className='place-preview' onClick={this.props.toggleDetailView}>
         <div className='place-preview-content'>
-          <h3>{activePlace.name}</h3>
+          <h3>{activePlace.name}</h3><p className='price-point'>{dollarSigns}</p>
           <p className='label'>{distance}</p>
           <hr />
           <p className='label'>{activePlace.followerInfo || 'You like this'}</p>

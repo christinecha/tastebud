@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 class PlaceSearch extends React.Component {
   constructor( props ) {
@@ -45,17 +46,12 @@ class PlaceSearch extends React.Component {
 
     return (
       <div className='location-search'>
-        <div className='input-wrapper'>
-          <input
-            ref={( $input ) => this.$input = $input}
-            type='text'
-            placeholder=' Your Location'
-          />
-          <div className='use-current-location' onClick={this.resetMap}>
-            <div className='icon'></div>
-          </div>
+        <Link to='/search' className='fake-input'>
+          Search for bars & restaurants
+        </Link>
+        <div className='use-current-location' onClick={this.resetMap}>
+          <div className='icon'></div>
         </div>
-        <div className='more'>&bull; &bull; &bull;</div>
       </div>
     )
   }
