@@ -31018,43 +31018,39 @@ var PlaceDetail = function (_React$Component) {
 
       var activePlace = this.props.activePlace;
 
+      // if ( activePlace.instagramPlaceUrl ) {
+      //   this.updateInstagramPlace( activePlace.instagramPlaceUrl )
+      //   return
+      // }
 
-      if (activePlace.instagramUsername) {
-        this.updateInstagramUsername(activePlace.instagramUsername);
-        return;
-      }
+      var name = activePlace.name,
+          vicinity = activePlace.vicinity;
 
-      var username = activePlace.name + ' ' + (activePlace.locality || '');
 
       var request = {
         params: {
-          username: username
+          name: name,
+          vicinity: vicinity
         }
       };
 
-      _axios2.default.get('/instagram-username', request).then(function (response) {
-        if (!response.data) {
-          request.params.username = activePlace.name;
+      _axios2.default.get('/instagram-place', request).then(function (response) {
+        var data = response.data;
 
-          _axios2.default.get('/instagram-username', request).then(function (r) {
-            return _this2.updateInstagramUsername(r.data);
-          });
-          return;
-        }
-
-        _this2.updateInstagramUsername(response.data);
+        var url = 'explore/locations/' + data.location.pk + '/' + data.slug;
+        _this2.updateInstagramPlace(url);
       });
     }
   }, {
-    key: 'updateInstagramUsername',
-    value: function updateInstagramUsername(instagramUsername) {
+    key: 'updateInstagramPlace',
+    value: function updateInstagramPlace(instagramPlaceUrl) {
       var _this3 = this;
 
       var activePlace = this.props.activePlace;
 
 
-      this.setState({ instagramUsername: instagramUsername }, function () {
-        (0, _place.updatePlace)(activePlace.id, { instagramUsername: instagramUsername });
+      this.setState({ instagramPlaceUrl: instagramPlaceUrl }, function () {
+        (0, _place.updatePlace)(activePlace.id, { instagramPlaceUrl: instagramPlaceUrl });
         _this3.setInstagramImages();
       });
     }
@@ -31063,18 +31059,17 @@ var PlaceDetail = function (_React$Component) {
     value: function setInstagramImages() {
       var _this4 = this;
 
-      if (!this.state.instagramUsername) return;
+      if (!this.state.instagramPlaceUrl) return;
 
       var request = {
         params: {
-          username: this.state.instagramUsername
+          url: this.state.instagramPlaceUrl
         }
       };
 
       _axios2.default.get('/instagram-data', request).then(function (response) {
         var data = response.data;
 
-        console.log(data);
         var images = data.media.nodes;
         var instagramImages = images.map(function (image) {
           return image.display_src;

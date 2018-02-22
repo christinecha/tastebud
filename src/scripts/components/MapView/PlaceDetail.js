@@ -26,55 +26,49 @@ class PlaceDetail extends React.Component {
   setInstagramUsername() {
     const { activePlace } = this.props
 
-    if ( activePlace.instagramUsername ) {
-      this.updateInstagramUsername( activePlace.instagramUsername )
-      return
-    }
+    // if ( activePlace.instagramPlaceUrl ) {
+    //   this.updateInstagramPlace( activePlace.instagramPlaceUrl )
+    //   return
+    // }
 
-    const username = `${ activePlace.name } ${ activePlace.locality || '' }`
+    const { name, vicinity } = activePlace
 
     const request = {
       params: {
-        username,
+        name,
+        vicinity,
       },
     }
 
-    axios.get( '/instagram-username', request )
+    axios.get( '/instagram-place', request )
     .then(( response ) => {
-      if ( !response.data ) {
-        request.params.username = activePlace.name
-
-        axios.get( '/instagram-username', request )
-        .then(( r ) => this.updateInstagramUsername( r.data ))
-        return
-      }
-
-      this.updateInstagramUsername( response.data )
+      const { data } = response
+      const url = `explore/locations/${ data.location.pk }/${ data.slug }`
+      this.updateInstagramPlace( url )
     })
   }
 
-  updateInstagramUsername( instagramUsername ) {
+  updateInstagramPlace( instagramPlaceUrl ) {
     const { activePlace } = this.props
 
-    this.setState({ instagramUsername }, () => {
-      updatePlace( activePlace.id, { instagramUsername })
+    this.setState({ instagramPlaceUrl }, () => {
+      updatePlace( activePlace.id, { instagramPlaceUrl })
       this.setInstagramImages()
     })
   }
 
   setInstagramImages() {
-    if ( !this.state.instagramUsername ) return
+    if ( !this.state.instagramPlaceUrl ) return
 
     const request = {
       params: {
-        username: this.state.instagramUsername,
+        url: this.state.instagramPlaceUrl,
       },
     }
 
     axios.get( '/instagram-data', request )
     .then(( response ) => {
       const { data } = response
-      console.log( data )
       const images = data.media.nodes
       const instagramImages = images.map(( image ) => image.display_src )
 

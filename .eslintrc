@@ -47,6 +47,7 @@
     #     "ArrowFunctionExpression": false
     #   }
     # }],
+    "prefer-promise-reject-errors": 0,
     "react/jsx-uses-vars": "warn",
     "semi": [ "warn", "never" ],
     "space-in-parens": [ "warn", "always", { "exceptions": [ "[]", "{}", "()" ]}],
