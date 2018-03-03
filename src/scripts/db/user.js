@@ -147,9 +147,16 @@ export const removePlaceFromUser = ( user, placeId ) => {
   return updateUser( user.uid, { places })
 }
 
-export const addPlaceToUser = ( user, placeId ) => {
-  let places = user.places || []
-  if ( places.indexOf( placeId ) > -1 ) return
-  places.push( placeId )
-  return updateUser( user.uid, { places })
+export const addPlaceToUser = ( userId, placeId ) => {
+  return new Promise(( resolve ) => {
+    getUser( userId )
+    .then(( snapshot ) => {
+      const user = snapshot.val()
+      let places = user.places || []
+      if ( places.indexOf( placeId ) > -1 ) return
+      places.push( placeId )
+      updateUser( user.uid, { places })
+      .then( resolve )
+    })
+  })
 }

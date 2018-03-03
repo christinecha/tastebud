@@ -24,14 +24,14 @@ class Header extends React.Component {
 
     return (
       <nav id='header'>
-        <NavItem isActive={pathMatch === 'map'}>
+        <NavItem isActive={pathMatch === 'map' || pathMatch === 'search-places'}>
           <Link to='/map'>
             <img src='/assets/images/icon_places.svg' />
             <p className='label'>Map</p>
           </Link>
         </NavItem>
-        <NavItem isActive={pathMatch === 'search'}>
-          <Link to='/search'>
+        <NavItem isActive={pathMatch === 'search-people'}>
+          <Link to='/search-people'>
             <img src='/assets/images/icon_add.svg' />
             <p className='label'>Add</p>
           </Link>

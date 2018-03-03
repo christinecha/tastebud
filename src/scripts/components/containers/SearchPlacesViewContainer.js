@@ -1,5 +1,5 @@
 import { connect } from 'react-redux'
-import SearchView from '../SearchView'
+import SearchPlacesView from '../SearchPlacesView'
 
 const mapStateToProps = ( state ) => {
   return {
@@ -12,8 +12,8 @@ const mapStateToProps = ( state ) => {
   }
 }
 
-const SearchViewContainer = connect(
+const SearchPlacesViewContainer = connect(
   mapStateToProps,
-)( SearchView )
+)( SearchPlacesView )
 
-export default SearchViewContainer
+export default SearchPlacesViewContainer

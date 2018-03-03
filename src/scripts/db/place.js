@@ -3,44 +3,26 @@ import createPlaceObject from '../lib/createPlaceObject'
 import { getFollowerInfo } from '../lib/getFollowerInfo'
 import { getUser } from './user'
 
-export const isDupePlace = ( locationData ) => {
-  return new Promise(( resolve, reject ) => {
-    ref.child( 'places' )
-    .orderByChild( 'lat' )
-    .equalTo( locationData.lat )
-    .on( 'value', ( snapshot ) => {
-      snapshot.forEach(( child ) => {
-        const location = child.val()
-        if ( locationData.lng === location.lng ) {
-          resolve( child.key )
-        }
-      })
-
-      resolve( null )
-    })
-  })
+export const getPlace = ( id ) => {
+  return ref.child( `places/${ id }` ).once( 'value' )
 }
 
 export const newPlace = ( _locationData ) => {
   return new Promise(( resolve ) => {
     const locationData = createPlaceObject( _locationData )
 
-    isDupePlace( locationData ).then(( dupeId ) => {
-      if ( dupeId ) {
-        locationData.id = dupeId
-        ref.child( `places/${ locationData.id }` ).update( locationData )
+    getPlace( locationData.id ).then(( snapshot ) => {
+      if ( snapshot.exists()) {
+        updatePlace( locationData.id, locationData )
         .then(() => resolve( locationData.id ))
         return
       }
 
-      ref.child( `places/${ locationData.id }` ).set( locationData )
+      ref.child( `places/${ locationData.id }` )
+      .set( locationData )
       .then(() => resolve( locationData.id ))
     })
   })
-}
-
-export const getPlace = ( id ) => {
-  return ref.child( `places/${ id }` ).once( 'value' )
 }
 
 export const updatePlace = ( id, data ) => {
@@ -48,14 +30,17 @@ export const updatePlace = ( id, data ) => {
 }
 
 export const addUserToPlace = ( placeId, userId ) => {
-  getPlace( placeId ).then(( snapshot ) => {
-    const place = snapshot.val()
-    const users = place.users || []
+  return new Promise(( resolve ) => {
+    getPlace( placeId ).then(( snapshot ) => {
+      const place = snapshot.val()
+      const users = place.users || []
 
-    if ( users.indexOf( userId ) > -1 ) return
+      if ( users.indexOf( userId ) > -1 ) return
 
-    users.push( userId )
-    updatePlace( placeId, { users })
+      users.push( userId )
+      updatePlace( placeId, { users })
+      .then( resolve )
+    })
   })
 }
 
@@ -112,4 +97,12 @@ export const getPlacesWithFollowerInfo = ( places, currentUser ) => {
       })
     })
   })
+}
+
+export const watchPlace = ( id, callback ) => {
+  return ref.child( `places/${ id }` ).on( 'value', callback )
+}
+
+export const unwatchPlace = ( id, callback ) => {
+  return ref.child( `places/${ id }` ).off( 'value', callback )
 }

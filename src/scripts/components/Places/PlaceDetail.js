@@ -1,7 +1,9 @@
 import React from 'react'
 import axios from 'axios'
 import getFriendlyDistance from '../../lib/getFriendlyDistance'
-import { updatePlace } from '../../db/place'
+import getInstagramData from './lib/getInstagramData'
+import getYelpData from './lib/getYelpData'
+import { updatePlace, unwatchPlace, watchPlace } from '../../db/place'
 
 import Carousel from '../shared/Carousel'
 import Modal from '../shared/Modal'
@@ -10,7 +12,10 @@ class PlaceDetail extends React.Component {
   constructor( props ) {
     super( props )
 
+    this.watchPlace = this.watchPlace.bind( this )
+
     this.state = {
+      place: {},
       yelpRating: null,
       instagramUsername: null,
       instagramImages: [],
@@ -19,94 +24,49 @@ class PlaceDetail extends React.Component {
   }
 
   componentDidMount() {
-    this.setYelpRating()
-    this.setInstagramUsername()
+    const { place } = this.props
+    watchPlace( place.id, this.watchPlace )
+    this.watchPlace()
   }
 
-  setInstagramUsername() {
-    const { activePlace } = this.props
+  componentWillUnmount() {
+    const { place } = this.props
+    unwatchPlace( place.id, this.watchPlace )
+  }
 
-    // if ( activePlace.instagramPlaceUrl ) {
-    //   this.updateInstagramPlace( activePlace.instagramPlaceUrl )
-    //   return
-    // }
+  watchPlace( snapshot ) {
+    if ( !snapshot ) return
+    const place = snapshot.val()
 
-    const { name, vicinity } = activePlace
+    if ( !place ) return
 
-    const request = {
-      params: {
-        name,
-        vicinity,
-      },
-    }
-
-    axios.get( '/instagram-place', request )
-    .then(( response ) => {
-      const { data } = response
-      const url = `explore/locations/${ data.location.pk }/${ data.slug }`
-      this.updateInstagramPlace( url )
+    this.setState({ place }, () => {
+      console.log( place )
+      if ( place.name && place.lat && place.lng ) {
+        this.setYelpRating()
+        this.setInstagram()
+      }
     })
   }
 
-  updateInstagramPlace( instagramPlaceUrl ) {
-    const { activePlace } = this.props
+  setInstagram() {
+    const { place } = this.state
 
-    this.setState({ instagramPlaceUrl }, () => {
-      updatePlace( activePlace.id, { instagramPlaceUrl })
-      this.setInstagramImages()
-    })
-  }
-
-  setInstagramImages() {
-    if ( !this.state.instagramPlaceUrl ) return
-
-    const request = {
-      params: {
-        url: this.state.instagramPlaceUrl,
-      },
-    }
-
-    axios.get( '/instagram-data', request )
-    .then(( response ) => {
-      const { data } = response
-      const images = data.media.nodes
-      const instagramImages = images.map(( image ) => image.display_src )
-
-      this.setState({ instagramImages })
+    getInstagramData( place )
+    .then(({ instagramPlaceUrl, instagramImages }) => {
+      const { place } = this.props
+      updatePlace( place.id, { instagramPlaceUrl })
+      this.setState({ instagramPlaceUrl, instagramImages })
     })
   }
 
   setYelpRating() {
-    const { activePlace } = this.props
+    const { place } = this.state
 
-    if ( activePlace.yelpRating && activePlace.yelpCategories ) {
-      this.setState({
-        yelpRating: activePlace.yelpRating,
-        yelpCategories: activePlace.yelpCategories,
-      })
-      return
-    }
-
-    const searchRequest = {
-      params: {
-        term: activePlace.name,
-        latitude: activePlace.lat,
-        longitude: activePlace.lng,
-      },
-    }
-
-    axios.get( '/yelp-data', searchRequest )
-    .then(( response ) => {
-      const { data } = response
-      const yelpCategories = data.categories.map(( category ) => category.title )
-      const yelpRating = data.rating.toFixed( 1 )
-
-      const yelpData = {
-        yelpRating,
-        yelpCategories,
-      }
+    getYelpData( place )
+    .then(( yelpData ) => {
       this.setState( yelpData )
-      updatePlace( activePlace.id, yelpData )
+      updatePlace( place.id, yelpData )
     })
   }
 
@@ -157,16 +117,16 @@ class PlaceDetail extends React.Component {
   }
 
   render () {
-    const { activePlace } = this.props
+    const { place } = this.props
 
-    if ( !activePlace ) return null
+    if ( !place ) return null
 
-    const { pricePoint, rating, vicinity } = activePlace
+    const { pricePoint, rating, vicinity } = place
     const { yelpRating } = this.state
 
     const latLng = {
-      lat: activePlace.lat,
-      lng: activePlace.lng,
+      lat: place.lat,
+      lng: place.lng,
     }
 
     const distance = getFriendlyDistance( latLng, this.props.currentLocation )
@@ -178,7 +138,7 @@ class PlaceDetail extends React.Component {
 
         <div className='place-info'>
           <div className='icon'></div>
-          <h2>{activePlace.name}</h2>
+          <h2>{place.name}</h2>
           <p className='price-point'>{dollarSigns}</p>
           <p className='label'>{vicinity} ({distance})</p>
           {this.renderYelpCategories()}
@@ -192,7 +152,7 @@ class PlaceDetail extends React.Component {
               <h4>{rating.toFixed( 1 )}</h4>
             </div>
           </div>
-          <p className='label'>{activePlace.followerInfo || 'You like this'}</p>
+          <p className='label'>{place.followerInfo || 'You like this'}</p>
           <hr />
         </div>
 

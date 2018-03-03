@@ -1,19 +1,25 @@
-const yelp = require( 'yelp-fusion' )
+const axios = require( 'axios' )
 
-const YELP_ID = 'xAlOtfTlrg38WtIA_B_QZA'
-const YELP_SECRET = 'Kiklju4gg6B9zuR9FqxqSSVaoAy8GFU9xzanoQVUvGTJhMS3vGxY4nypjlemqoUp'
+const YELP_KEY = '2tbl7f9gBPKWCoTC2T8InIU64365FBnecXFOzDwyfElZAeLyoDmOZQu2Uc4k8Ttv0Lesc-FSQVLDBwv3D6JOy6Un1G4R3dDdqVdCNPMI7k-_emIZyGRdx7jxWG-PWXYx'
 
 const yelpData = ( req, res ) => {
-  yelp.accessToken( YELP_ID, YELP_SECRET )
-  .then(( response ) => {
-    const client = yelp.client( response.jsonBody.access_token )
+  const { term, latitude, longitude } = req.query
 
-    client.search( req.query )
-    .then(( response ) => {
-      const firstResult = response.jsonBody.businesses[ 0 ]
-      res.send( firstResult )
-    })
-    .catch(( err ) => console.log( err ))
+  const searchRequest = {
+    headers: {
+      'Authorization': `Bearer ${ YELP_KEY }`,
+    },
+    params: {
+      term,
+      latitude,
+      longitude,
+    },
+  }
+
+  axios.get( 'https://api.yelp.com/v3/businesses/search', searchRequest )
+  .then(( response ) => {
+    const firstResult = response.data.businesses[ 0 ]
+    res.send( firstResult )
   })
   .catch(( err ) => console.log( err ))
 }

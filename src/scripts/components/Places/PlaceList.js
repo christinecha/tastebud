@@ -1,13 +1,18 @@
 import React from 'react'
 import Place from './Place'
-import PlaceDetail from './MapView/PlaceDetail'
+import PlaceDetail from './PlaceDetail'
 
 class PlaceList extends React.Component {
   constructor( props ) {
     super( props )
+
     this.state = {
       activePlace: null,
     }
+  }
+
+  activatePlaceDetail( place ) {
+    this.setState({ activePlace: place })
   }
 
   renderPlaceDetail() {
@@ -17,7 +22,7 @@ class PlaceList extends React.Component {
     return (
       <div className='place-detail-wrapper'>
         <PlaceDetail
-          activePlace={activePlace}
+          place={activePlace}
           currentLocation={this.props.currentLocation}
           toggleDetailView={() => this.setState({ activePlace: null })}
         />
@@ -29,11 +34,13 @@ class PlaceList extends React.Component {
     return this.props.places.map(( place ) => {
       if ( !place ) return null
 
+      place.id = place.place_id || place.id
+
       return (
         <Place
           key={place.id}
           place={place}
-          onClick={() => this.setState({ activePlace: place })}
+          onClick={() => this.activatePlaceDetail( place )}
           {...this.props}
         />
       )

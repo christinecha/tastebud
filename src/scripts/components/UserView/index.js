@@ -11,7 +11,7 @@ import {
 import { getPlacesWithFollowerInfo } from '../../db/place'
 
 import EditUser from './EditUser'
-import PlaceList from '../PlaceList'
+import PlaceList from '../Places/PlaceList'
 
 class UserView extends React.Component {
   constructor ( props ) {

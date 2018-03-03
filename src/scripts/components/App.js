@@ -1,6 +1,5 @@
 import React from 'react'
-import { withRouter } from 'react-router-dom'
-import { Route, Switch, Redirect } from 'react-router-dom'
+import { Route, Switch, Redirect, withRouter } from 'react-router-dom'
 
 import PropsRoute from './PropsRoute'
 
@@ -10,7 +9,8 @@ import SampleComponent from './SampleComponent'
 import MapViewContainer from './containers/MapViewContainer'
 import JoinViewContainer from './containers/JoinViewContainer'
 import LoginViewContainer from './containers/LoginViewContainer'
-import SearchViewContainer from './containers/SearchViewContainer'
+import SearchPlacesViewContainer from './containers/SearchPlacesViewContainer'
+import SearchPeopleViewContainer from './containers/SearchPeopleViewContainer'
 import UserViewContainer from './containers/UserViewContainer'
 import UserView from './UserView/index'
 import FollowersView from './FollowersView'
@@ -151,7 +151,8 @@ class App extends React.Component {
           <Route path='/sample' component={SampleComponent} />
           <Route path='/login' component={LoginViewContainer} />
           <Route path='/join' component={JoinViewContainer} />
-          <Route path='/search' component={SearchViewContainer} />
+          <Route path='/search-places' component={SearchPlacesViewContainer} />
+          <Route path='/search-people' component={SearchPeopleViewContainer} />
           <Route exact path='/users/:uid' component={UserViewContainer} />
           <PropsRoute path='/users/:uid/followers' component={FollowersView} {...this.props} />
           <PropsRoute path='/users/:uid/following' component={FollowingView} {...this.props} />
