@@ -80,7 +80,6 @@ class Place extends React.Component {
     return (
       <div className='place' onClick={this.handleClickPlace}>
         <div className='info'>
-          {place.id}
           <div className='icon'></div>
           <h3 className='name'>{place.name}</h3>
           <p className='vicinity label'>{place.vicinity}</p>

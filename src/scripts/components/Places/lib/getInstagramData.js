@@ -44,7 +44,7 @@ const getInstagramData = ( activePlace ) => {
       .then(( response ) => {
         const { data } = response
         const images = data.media.nodes
-        const instagramImages = images.map(( image ) => image.display_src )
+        const instagramImages = images.map(( image ) => image.thumbnail_src )
         resolve({
           instagramPlaceUrl,
           instagramImages,

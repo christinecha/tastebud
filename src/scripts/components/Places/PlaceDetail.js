@@ -1,5 +1,6 @@
 import React from 'react'
 import axios from 'axios'
+
 import getFriendlyDistance from '../../lib/getFriendlyDistance'
 import getInstagramData from './lib/getInstagramData'
 import getYelpData from './lib/getYelpData'
@@ -7,6 +8,7 @@ import { updatePlace, unwatchPlace, watchPlace } from '../../db/place'
 
 import Carousel from '../shared/Carousel'
 import Modal from '../shared/Modal'
+import Image from '../shared/Image'
 
 class PlaceDetail extends React.Component {
   constructor( props ) {
@@ -18,7 +20,7 @@ class PlaceDetail extends React.Component {
       place: {},
       yelpRating: null,
       instagramUsername: null,
-      instagramImages: [],
+      instagramImages: new Array( 6 ),
       activeModalId: null,
     }
   }
@@ -98,8 +100,13 @@ class PlaceDetail extends React.Component {
 
   renderInstagramFeed() {
     const MODAL_ID = 0
+
     let images = this.state.instagramImages.map(( src, i ) => {
-      return <div className='instagram-image' style={{ backgroundImage: `url(${ src })` }} key={i}></div>
+      return (
+        <div className='instagram-image-wrapper' key={i}>
+          <Image className='instagram-image' useBgImage={true} src={src} />
+        </div>
+      )
     })
 
     return (

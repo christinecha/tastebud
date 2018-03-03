@@ -133,11 +133,24 @@
       &[data-departure-index="2"] { transform: translate3d(-200%, 0, 0); }
     }
 
+    .instagram-image-wrapper {
+      width: 100%;
+      height: 100%;
+      background-color: @light-gray;
+    }
+
     .instagram-image {
       width: 100%;
       height: 100%;
       background-size: cover;
       background-position: center;
+
+      opacity: 0;
+      transition: opacity 300ms ease-in-out;
+
+      &[data-is-loaded="true"] {
+        opacity: 1;
+      }
     }
   }
 }
